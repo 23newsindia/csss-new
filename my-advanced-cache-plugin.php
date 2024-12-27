@@ -40,6 +40,9 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug-utility.php';
 require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-varnish.php';
 require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-vcl-generator.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-varnish-settings.php';
+// Load script handling files
+require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-script-handler.php';
+
 
 class MACP_Plugin {
     private static $instance = null;
@@ -50,6 +53,7 @@ class MACP_Plugin {
     private $admin_bar;
     private $varnish;
     private $varnish_settings;
+    private $script_handler;
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -73,6 +77,7 @@ class MACP_Plugin {
         $this->js_optimizer = new MACP_JS_Optimizer();
         $this->admin = new MACP_Admin($this->redis);
         $this->admin_bar = new MACP_Admin_Bar();
+        $this->script_handler = new MACP_Script_Handler();
         
         // Initialize Varnish if enabled
         if (get_option('macp_enable_varnish', 0)) {

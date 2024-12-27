@@ -14,6 +14,11 @@ class MACP_JS_Tag_Processor {
             $new_tag .= ' data-rocket-src="' . $src_match[1] . '"';
         }
 
+        // Add defer attribute if enabled globally
+        if (get_option('macp_enable_js_defer', 0)) {
+            $new_tag .= ' defer';
+        }
+
         // Add preserved attributes
         foreach ($attributes as $name => $value) {
             if ($name !== 'src' && $name !== 'type') {
@@ -21,8 +26,12 @@ class MACP_JS_Tag_Processor {
             }
         }
 
-        // Close tag
-        $new_tag .= '></script>';
+        // Preserve any inline script content
+        if (preg_match('/<script[^>]*>(.*?)<\/script>/s', $tag, $content_match)) {
+            $new_tag .= '>' . $content_match[1] . '</script>';
+        } else {
+            $new_tag .= '></script>';
+        }
 
         return $new_tag;
     }

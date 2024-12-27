@@ -30,19 +30,23 @@ class RocketLazyLoadScripts {
             this._loadEverythingNow();
             return;
         }
+
+        // Add event listeners for all trigger events
+        this._addUserInteractionListener(this);
         
+        // Handle page show events
         window.addEventListener("pageshow", (e) => {
             this.persisted = e.persisted;
         });
 
+        // Initialize after DOM is ready
         window.addEventListener("DOMContentLoaded", () => {
             this._preconnect3rdParties();
         });
-
-        this._addUserInteractionListener(this);
     }
 
     _addUserInteractionListener(instance) {
+        // Add listeners for all trigger events
         this.triggerEvents.forEach(eventName => {
             window.addEventListener(eventName, instance.userEventHandler, {
                 passive: true,
@@ -66,13 +70,15 @@ class RocketLazyLoadScripts {
     }
 
     async _loadEverythingNow() {
-        this._delayEventListeners();
-        this._delayJQueryReady(this);
-        this._handleDocumentWrite();
+        // Register all scripts first
         this._registerAllDelayedScripts();
+        
+        // Load scripts in order
         await this._loadScriptsFromList(this.delayedScripts.normal);
         await this._loadScriptsFromList(this.delayedScripts.defer);
         await this._loadScriptsFromList(this.delayedScripts.async);
+        
+        // Trigger events
         try {
             await this._triggerDOMContentLoaded();
             await this._triggerWindowLoad();
@@ -82,14 +88,14 @@ class RocketLazyLoadScripts {
     }
 
     _registerAllDelayedScripts() {
-        document.querySelectorAll("script[type=rocketlazyloadscript]").forEach(elem => {
-            if (elem.hasAttribute("data-rocket-src")) {
-                if (elem.hasAttribute("async") && elem.async !== false) {
-                    this.delayedScripts.async.push(elem);
-                } else if (elem.hasAttribute("defer") && elem.defer !== false || elem.getAttribute("data-rocket-type") === "module") {
-                    this.delayedScripts.defer.push(elem);
+        document.querySelectorAll("script[type=rocketlazyloadscript]").forEach(script => {
+            if (script.hasAttribute("data-rocket-src")) {
+                if (script.hasAttribute("async") && script.async !== false) {
+                    this.delayedScripts.async.push(script);
+                } else if (script.hasAttribute("defer") && script.defer !== false) {
+                    this.delayedScripts.defer.push(script);
                 } else {
-                    this.delayedScripts.normal.push(elem);
+                    this.delayedScripts.normal.push(script);
                 }
             }
         });
@@ -98,15 +104,17 @@ class RocketLazyLoadScripts {
     async _transformScript(script) {
         return new Promise((resolve, reject) => {
             const newScript = document.createElement("script");
+            
+            // Copy all attributes except type
             [...script.attributes].forEach(attr => {
                 let name = attr.nodeName;
                 if (name !== "type") {
-                    if (name === "data-rocket-type") name = "type";
                     if (name === "data-rocket-src") name = "src";
                     newScript.setAttribute(name, attr.nodeValue);
                 }
             });
             
+            // Handle load events
             if (script.hasAttribute("src")) {
                 newScript.addEventListener("load", resolve);
                 newScript.addEventListener("error", reject);
@@ -115,6 +123,7 @@ class RocketLazyLoadScripts {
                 resolve();
             }
 
+            // Replace old script with new one
             script.parentNode.replaceChild(newScript, script);
         });
     }
@@ -129,79 +138,30 @@ class RocketLazyLoadScripts {
         await Promise.all(promises);
     }
 
-    _delayEventListeners() {
-        const eventListeners = {};
-        
-        ["DOMContentLoaded", "load", "scroll", "click"].forEach(event => {
-            document.addEventListener = function(type, fn) {
-                if (type === event) {
-                    eventListeners[event] = eventListeners[event] || [];
-                    eventListeners[event].push(fn);
-                    return;
-                }
-                Event.prototype.addEventListener.apply(this, arguments);
-            };
-        });
-
-        window.addEventListener = function(type, fn) {
-            if (eventListeners[type]) {
-                eventListeners[type].push(fn);
-                return;
-            }
-            Event.prototype.addEventListener.apply(this, arguments);
-        };
-    }
-
     async _triggerDOMContentLoaded() {
-        document.dispatchEvent(new Event("rocket-DOMContentLoaded"));
-        await this._littleBreath();
-        document.dispatchEvent(new Event("rocket-readystatechange"));
+        document.dispatchEvent(new Event("DOMContentLoaded", {
+            bubbles: true,
+            cancelable: true
+        }));
     }
 
     async _triggerWindowLoad() {
-        window.dispatchEvent(new Event("rocket-load"));
-        await this._littleBreath();
-        window.dispatchEvent(new Event("rocket-pageshow"));
-    }
-
-    async _littleBreath() {
-        return new Promise(resolve => {
-            setTimeout(resolve, 30);
-        });
-    }
-
-    _delayJQueryReady(rocket) {
-        let jQueryInstance = window.jQuery;
-        Object.defineProperty(window, "jQuery", {
-            get: () => jQueryInstance,
-            set: newJQuery => {
-                if (newJQuery && newJQuery.fn && !rocket.allJQueries.includes(newJQuery)) {
-                    newJQuery.fn.ready = newJQuery.fn.init.prototype.ready = function(fn) {
-                        rocket.domReadyFired ? fn.bind(document)(newJQuery) : document.addEventListener("rocket-DOMContentLoaded", () => fn.bind(document)(newJQuery));
-                        return this;
-                    };
-                    rocket.allJQueries.push(newJQuery);
-                }
-                jQueryInstance = newJQuery;
-            }
-        });
+        window.dispatchEvent(new Event("load", {
+            bubbles: true,
+            cancelable: true
+        }));
     }
 
     static run() {
         const rocket = new RocketLazyLoadScripts();
-        rocket._addUserInteractionListener(rocket);
     }
 }
 
-RocketLazyLoadScripts.run();
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    RocketLazyLoadScripts.run();
+});
 </script>
 EOT;
     }
-
-    public function process_scripts($html) {
-        if (!get_option('macp_enable_js_delay', 0)) {
-            return $html;
-        }
-
-        // Add the loader script right after <head>
-        $html = preg_replace('/<head(.*)>/i', '$0' . $this->get_loader_script(), $html, 1)
+}
