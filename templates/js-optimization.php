@@ -25,9 +25,8 @@
                 <p class="description">Enter script URLs to exclude from defer (one per line). WordPress admin scripts (/wp-admin/*) are automatically excluded.</p>
                 <textarea name="macp_defer_excluded_scripts" rows="5" class="large-text code"><?php 
                     $default_defer_exclusions = [
-                        '/wp-admin/*',
-                        'wp-includes/js/admin-bar.min.js',
-                        'wp-includes/js/api-request.min.js'
+                        '/wp-admin/*'
+                        
                     ];
                     $custom_exclusions = get_option('macp_defer_excluded_scripts', []);
                     echo esc_textarea(implode("\n", array_merge($default_defer_exclusions, $custom_exclusions))); 
@@ -56,12 +55,8 @@
                 <p class="description">Enter script URLs to exclude from delay (one per line). WordPress admin scripts (/wp-admin/*) are automatically excluded.</p>
                 <textarea name="macp_delay_excluded_scripts" rows="5" class="large-text code"><?php 
                     $default_delay_exclusions = [
-                        '/wp-admin/*',
-                        'wp-includes/js/admin-bar.min.js',
-                        'wp-includes/js/api-request.min.js',
-                        'wp-includes/js/jquery/jquery-migrate',
-                        'wp-includes/js/underscore.min.js',
-                        'wp-includes/js/wp-util.min.js'
+                        '/wp-admin/*'
+                       
                     ];
                     $custom_exclusions = get_option('macp_delay_excluded_scripts', []);
                     echo esc_textarea(implode("\n", array_merge($default_delay_exclusions, $custom_exclusions))); 

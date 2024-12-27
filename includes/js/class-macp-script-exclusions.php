@@ -4,17 +4,7 @@
  */
 class MACP_Script_Exclusions {
     private static $default_exclusions = [
-        '/wp-admin/',
-        'wp-includes/js/admin-bar',
-        'wp-includes/js/jquery/jquery',
-        'wp-includes/js/jquery/jquery-migrate',
-        'wp-includes/js/underscore',
-        'wp-includes/js/wp-util',
-        'wp-includes/js/api-request',
-        'wp-includes/js/dist/a11y',
-        'wp-admin/js/common',
-        'wp-includes/js/hoverintent-js',
-        'wp-includes/js/clipboard'
+        '/wp-admin/'
     ];
 
     /**
