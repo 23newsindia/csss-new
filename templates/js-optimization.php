@@ -22,9 +22,17 @@
 
             <div class="macp-exclusion-section">
                 <h3>Exclude from Defer</h3>
-                <p class="description">Enter script URLs to exclude from defer (one per line).</p>
+                <p class="description">Enter script URLs to exclude from defer (one per line). WordPress admin scripts (/wp-admin/*) are automatically excluded.</p>
                 <textarea name="macp_defer_excluded_scripts" rows="5" class="large-text code"><?php 
-                    echo esc_textarea(implode("\n", get_option('macp_defer_excluded_scripts', []))); 
+                    $default_defer_exclusions = [
+                        '/wp-admin/*',
+                        'jquery.js',
+                        'jquery.min.js',
+                        'wp-includes/js/admin-bar.min.js',
+                        'wp-includes/js/api-request.min.js'
+                    ];
+                    $custom_exclusions = get_option('macp_defer_excluded_scripts', []);
+                    echo esc_textarea(implode("\n", array_merge($default_defer_exclusions, $custom_exclusions))); 
                 ?></textarea>
             </div>
         </div>
@@ -47,9 +55,20 @@
 
             <div class="macp-exclusion-section">
                 <h3>Exclude from Delay</h3>
-                <p class="description">Enter script URLs to exclude from delay (one per line).</p>
+                <p class="description">Enter script URLs to exclude from delay (one per line). WordPress admin scripts (/wp-admin/*) are automatically excluded.</p>
                 <textarea name="macp_delay_excluded_scripts" rows="5" class="large-text code"><?php 
-                    echo esc_textarea(implode("\n", get_option('macp_delay_excluded_scripts', []))); 
+                    $default_delay_exclusions = [
+                        '/wp-admin/*',
+                        'jquery.js',
+                        'jquery.min.js',
+                        'wp-includes/js/admin-bar.min.js',
+                        'wp-includes/js/api-request.min.js',
+                        'wp-includes/js/jquery/jquery-migrate',
+                        'wp-includes/js/underscore.min.js',
+                        'wp-includes/js/wp-util.min.js'
+                    ];
+                    $custom_exclusions = get_option('macp_delay_excluded_scripts', []);
+                    echo esc_textarea(implode("\n", array_merge($default_delay_exclusions, $custom_exclusions))); 
                 ?></textarea>
             </div>
         </div>
@@ -60,6 +79,8 @@
         <ul>
             <li>Defer: Scripts will load in parallel but execute after HTML parsing</li>
             <li>Delay: Scripts will only load after user interaction (click, scroll, etc.)</li>
+            <li>WordPress admin scripts (/wp-admin/*) are automatically excluded</li>
+            <li>jQuery and core WordPress scripts are excluded by default</li>
             <li>Use complete URLs or unique parts of URLs</li>
             <li>Critical scripts should be excluded from both defer and delay</li>
         </ul>

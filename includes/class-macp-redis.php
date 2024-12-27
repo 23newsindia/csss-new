@@ -115,6 +115,26 @@ class MACP_Redis {
         $this->batch_queue = [];
     }
 
+    public function delete($key) {
+        if (!$this->redis) {
+            return false;
+        }
+
+        if (is_array($key)) {
+            return $this->redis->del($key);
+        }
+        
+        return $this->redis->del($key);
+    }
+
+    public function keys($pattern) {
+        if (!$this->redis) {
+            return [];
+        }
+
+        return $this->redis->keys($pattern);
+    }
+
     public function prime_cache() {
         if (!$this->redis) return;
 
