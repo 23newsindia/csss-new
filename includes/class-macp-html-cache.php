@@ -8,10 +8,12 @@ class MACP_HTML_Cache {
     private $cache_dir;
     private $excluded_urls;
     private $css_optimizer;
+    private $redis;
 
     public function __construct() {
         $this->cache_dir = WP_CONTENT_DIR . '/cache/macp/';
         $this->excluded_urls = $this->get_excluded_urls();
+        $this->redis = new MACP_Redis();
         
         if (get_option('macp_remove_unused_css', 0)) {
             $this->css_optimizer = new MACP_CSS_Optimizer();
@@ -128,6 +130,12 @@ class MACP_HTML_Cache {
             }
         }
 
+        // Store in Redis for faster access
+        if ($this->redis) {
+            $this->redis->queue_set('html_' . $cache_key, $buffer, 3600);
+            $this->redis->flush_queue();
+        }
+
         return $buffer;
     }
 
@@ -163,9 +171,19 @@ class MACP_HTML_Cache {
                         unlink($file);
                     }
                 }
+
+                // Clear Redis cache
+                if ($this->redis) {
+                    $this->redis->delete('html_' . $cache_key);
+                }
             }
         } else {
             array_map('unlink', glob($this->cache_dir . '*.{html,gz}', GLOB_BRACE));
+            
+            // Clear all Redis HTML cache
+            if ($this->redis) {
+                $this->redis->delete($this->redis->keys('html_*'));
+            }
         }
     }
 }
