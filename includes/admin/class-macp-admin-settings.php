@@ -4,9 +4,11 @@
  */
 class MACP_Admin_Settings {
     private $settings_manager;
+    private $filesystem;
 
     public function __construct() {
         $this->settings_manager = new MACP_Settings_Manager();
+        $this->filesystem = new MACP_Filesystem();
         add_action('wp_ajax_macp_toggle_setting', [$this, 'ajax_toggle_setting']);
         add_action('wp_ajax_macp_save_textarea', [$this, 'ajax_save_textarea']);
         add_action('wp_ajax_macp_clear_cache', [$this, 'ajax_clear_cache']);
@@ -81,53 +83,51 @@ class MACP_Admin_Settings {
         
         wp_send_json_success(['message' => 'Cache cleared successfully']);
     }
-}
 
-
-public function init_ajax_handlers() {
-    add_action('wp_ajax_macp_generate_mobile_cpcss', [$this, 'ajax_generate_mobile_cpcss']);
-    add_action('wp_ajax_macp_toggle_mobile_cpcss', [$this, 'ajax_toggle_mobile_cpcss']);
-}
-
-public function ajax_generate_mobile_cpcss() {
-    check_ajax_referer('macp_admin_nonce', 'nonce');
-
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error('Unauthorized');
+    public function init_ajax_handlers() {
+        add_action('wp_ajax_macp_generate_mobile_cpcss', [$this, 'ajax_generate_mobile_cpcss']);
+        add_action('wp_ajax_macp_toggle_mobile_cpcss', [$this, 'ajax_toggle_mobile_cpcss']);
     }
 
-    $critical_css = new MACP_Critical_CSS(
-        new MACP_Critical_CSS_Generation(new MACP_Critical_CSS_Processor($this->filesystem)),
-        $this->settings_manager,
-        $this->filesystem
-    );
+    public function ajax_generate_mobile_cpcss() {
+        check_ajax_referer('macp_admin_nonce', 'nonce');
 
-    $critical_css->process_handler('mobile');
-
-    wp_send_json_success(['message' => 'Mobile Critical CSS generation started']);
-}
-
-public function ajax_toggle_mobile_cpcss() {
-    check_ajax_referer('macp_admin_nonce', 'nonce');
-
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error('Unauthorized');
-    }
-
-    $value = (int)$_POST['value'];
-    
-    if ($this->settings_manager->update_setting('async_css_mobile', $value)) {
-        if ($value === 1) {
-            // Start mobile CPCSS generation when enabling
-            $critical_css = new MACP_Critical_CSS(
-                new MACP_Critical_CSS_Generation(new MACP_Critical_CSS_Processor($this->filesystem)),
-                $this->settings_manager,
-                $this->filesystem
-            );
-            $critical_css->process_handler('mobile');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
         }
-        wp_send_json_success(['message' => 'Setting updated successfully']);
-    } else {
-        wp_send_json_error(['message' => 'Failed to update setting']);
+
+        $critical_css = new MACP_Critical_CSS(
+            new MACP_Critical_CSS_Generation(new MACP_Critical_CSS_Processor($this->filesystem)),
+            $this->settings_manager,
+            $this->filesystem
+        );
+
+        $critical_css->process_handler('mobile');
+
+        wp_send_json_success(['message' => 'Mobile Critical CSS generation started']);
+    }
+
+    public function ajax_toggle_mobile_cpcss() {
+        check_ajax_referer('macp_admin_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        $value = (int)$_POST['value'];
+        
+        if ($this->settings_manager->update_setting('async_css_mobile', $value)) {
+            if ($value === 1) {
+                $critical_css = new MACP_Critical_CSS(
+                    new MACP_Critical_CSS_Generation(new MACP_Critical_CSS_Processor($this->filesystem)),
+                    $this->settings_manager,
+                    $this->filesystem
+                );
+                $critical_css->process_handler('mobile');
+            }
+            wp_send_json_success(['message' => 'Setting updated successfully']);
+        } else {
+            wp_send_json_error(['message' => 'Failed to update setting']);
+        }
     }
 }

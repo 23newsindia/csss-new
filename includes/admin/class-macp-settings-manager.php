@@ -15,8 +15,21 @@ class MACP_Settings_Manager {
         'macp_enable_js_defer' => 0,
         'macp_enable_js_delay' => 0,
         'macp_enable_varnish' => 0,
-        'macp_varnish_port' => 80
+        'macp_varnish_port' => 80,
+        'async_css_mobile' => 0
     ];
+
+    /**
+     * Get a single setting value
+     */
+    public function get_setting($key, $default = null) {
+        if (!isset($this->default_settings['macp_' . $key]) && !isset($this->default_settings[$key])) {
+            return $default;
+        }
+
+        $option_key = isset($this->default_settings['macp_' . $key]) ? 'macp_' . $key : $key;
+        return get_option($option_key, $this->default_settings[$option_key]);
+    }
 
     /**
      * Get all plugin settings
@@ -39,11 +52,8 @@ class MACP_Settings_Manager {
      * Update a single setting
      */
     public function update_setting($key, $value) {
-        if (!array_key_exists($key, $this->default_settings)) {
-            return false;
-        }
-
-        return update_option($key, $value);
+        $option_key = isset($this->default_settings['macp_' . $key]) ? 'macp_' . $key : $key;
+        return update_option($option_key, $value);
     }
 
     /**

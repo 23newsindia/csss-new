@@ -6,9 +6,11 @@ class MACP_Admin {
     private $redis;
     private $settings_handler;
     private $assets_handler;
+    private $settings_manager;
 
     public function __construct($redis) {
         $this->redis = $redis;
+        $this->settings_manager = new MACP_Settings_Manager();
         $this->settings_handler = new MACP_Admin_Settings();
         $this->assets_handler = new MACP_Admin_Assets();
 
@@ -45,6 +47,8 @@ class MACP_Admin {
         if (!current_user_can('manage_options')) return;
 
         $settings = $this->settings_handler->get_all_settings();
+        $settings_manager = $this->settings_manager; // Make settings manager available to templates
+        
         include MACP_PLUGIN_DIR . 'templates/admin-page.php';
         include MACP_PLUGIN_DIR . 'templates/css-exclusions.php';
         include MACP_PLUGIN_DIR . 'templates/js-optimization.php';

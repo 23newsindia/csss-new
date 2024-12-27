@@ -1,6 +1,11 @@
 <?php
 defined('ABSPATH') || exit;
 
+// Make sure settings_manager is available
+if (!isset($settings_manager)) {
+    return;
+}
+
 $mobile_cpcss_active = $settings_manager->get_setting('async_css_mobile', 0);
 ?>
 <div id="macp-mobile-cpcss-view" class="macp-card">

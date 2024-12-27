@@ -1,6 +1,6 @@
 jQuery(document).ready(function($) {
-  
-   $('#macp-generate-mobile-cpcss').on('click', function(e) {
+    // Handle mobile CPCSS generation
+    $('#macp-generate-mobile-cpcss').on('click', function(e) {
         e.preventDefault();
         const $button = $(this);
 
@@ -60,7 +60,7 @@ jQuery(document).ready(function($) {
             }
         });
     });
-});
+
     // Auto-save functionality for textareas
     let textareaTimeout;
     $('.macp-exclusion-section textarea').on('input', function() {
@@ -156,5 +156,3 @@ jQuery(document).ready(function($) {
         });
     });
 });
-
-
