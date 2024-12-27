@@ -40,9 +40,11 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug-utility.php';
 require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-varnish.php';
 require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-vcl-generator.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-varnish-settings.php';
-// Load script handling files
-require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-script-handler.php';
 
+// Load script handling files - Note the order is important!
+require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-script-attributes.php';
+require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-script-rules.php';
+require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-script-handler.php';
 
 class MACP_Plugin {
     private static $instance = null;

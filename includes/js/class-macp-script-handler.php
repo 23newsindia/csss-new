@@ -22,36 +22,20 @@ class MACP_Script_Handler {
         }
 
         // Skip if script is excluded
-        if ($this->is_script_excluded($handle, $src)) {
+        if (MACP_Script_Rules::is_excluded($handle, $src, $this->excluded_scripts)) {
             return $tag;
         }
 
-        // Don't add defer to inline scripts
-        if (!$src) {
+        // Check if script can be deferred
+        if (!MACP_Script_Rules::can_defer($tag, $handle, $src)) {
             return $tag;
         }
 
         // Add defer attribute if not already present
-        if (strpos($tag, 'defer') === false) {
+        if (strpos($tag, 'defer="defer"') === false) {
             $tag = str_replace(' src=', ' defer="defer" src=', $tag);
         }
 
         return $tag;
-    }
-
-    private function is_script_excluded($handle, $src) {
-        // Check handle-based exclusions
-        if (in_array($handle, $this->excluded_scripts)) {
-            return true;
-        }
-
-        // Check URL-based exclusions
-        foreach ($this->excluded_scripts as $excluded_script) {
-            if (strpos($src, $excluded_script) !== false) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
