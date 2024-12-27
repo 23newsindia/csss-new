@@ -1,7 +1,7 @@
 <?php
-require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-script-processor.php';
-require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-script-attributes.php';
-
+/**
+ * Handles JavaScript output buffering
+ */
 class MACP_JS_Buffer_Handler {
     private $excluded_scripts = [];
     private static $instance = null;

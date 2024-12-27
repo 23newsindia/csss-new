@@ -11,8 +11,10 @@ class MACP_Script_Handler {
     }
 
     private function init_hooks() {
-        // Hook into script_loader_tag to modify script tags
-        add_filter('script_loader_tag', [$this, 'process_script_tag'], 10, 3);
+        // Only modify scripts on frontend
+        if (!is_admin()) {
+            add_filter('script_loader_tag', [$this, 'process_script_tag'], 10, 3);
+        }
     }
 
     public function process_script_tag($tag, $handle, $src) {

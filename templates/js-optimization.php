@@ -26,8 +26,6 @@
                 <textarea name="macp_defer_excluded_scripts" rows="5" class="large-text code"><?php 
                     $default_defer_exclusions = [
                         '/wp-admin/*',
-                        'jquery.js',
-                        'jquery.min.js',
                         'wp-includes/js/admin-bar.min.js',
                         'wp-includes/js/api-request.min.js'
                     ];
@@ -59,8 +57,6 @@
                 <textarea name="macp_delay_excluded_scripts" rows="5" class="large-text code"><?php 
                     $default_delay_exclusions = [
                         '/wp-admin/*',
-                        'jquery.js',
-                        'jquery.min.js',
                         'wp-includes/js/admin-bar.min.js',
                         'wp-includes/js/api-request.min.js',
                         'wp-includes/js/jquery/jquery-migrate',

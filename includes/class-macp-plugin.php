@@ -1,34 +1,56 @@
 <?php
+/**
+ * Main plugin class that handles initialization and core functionality
+ */
 class MACP_Plugin {
     private static $instance = null;
     private $redis;
     private $html_cache;
     private $admin;
     private $js_optimizer;
+    private $admin_bar;
+    private $varnish;
+    private $varnish_settings;
+    private $script_handler;
 
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
-            self::$instance->init();
         }
         return self::$instance;
     }
 
+    private function __construct() {
+        $this->init();
+    }
+
     private function init() {
+        // Register activation and deactivation hooks
         register_activation_hook(MACP_PLUGIN_FILE, [$this, 'activate']);
         register_deactivation_hook(MACP_PLUGIN_FILE, [$this, 'deactivate']);
 
+        // Initialize components
         $this->redis = new MACP_Redis();
         $this->html_cache = new MACP_HTML_Cache();
         $this->js_optimizer = new MACP_JS_Optimizer();
         $this->admin = new MACP_Admin($this->redis);
+        $this->admin_bar = new MACP_Admin_Bar();
+        $this->script_handler = new MACP_Script_Handler();
+        
+        // Initialize Varnish if enabled
+        if (get_option('macp_enable_varnish', 0)) {
+            $this->varnish = new MACP_Varnish();
+        }
+        $this->varnish_settings = new MACP_Varnish_Settings();
 
         $this->init_hooks();
+        
+        MACP_Debug::log('Plugin initialized');
     }
 
     private function init_hooks() {
         // Initialize caching based on settings
-        add_action('template_redirect', [$this, 'initialize_caching'], 0);
+        add_action('init', [$this, 'initialize_caching'], 0);
         
         // Handle cache clearing
         add_action('save_post', [$this->html_cache, 'clear_cache']);
@@ -59,6 +81,9 @@ class MACP_Plugin {
         add_option('macp_minify_html', 0);
         add_option('macp_enable_js_defer', 0);
         add_option('macp_enable_js_delay', 0);
+        add_option('macp_enable_varnish', 0);
+        add_option('macp_varnish_servers', ['127.0.0.1']);
+        add_option('macp_varnish_port', 6081);
     }
 
     public function deactivate() {
