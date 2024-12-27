@@ -7,44 +7,45 @@ class MACP_Script_Processor {
      * Process a script tag
      */
     public static function process_tag($tag, $excluded_scripts = []) {
-        // Skip if already processed or excluded
-        if (strpos($tag, 'rocketlazyloadscript') !== false || 
-            MACP_Script_Attributes::is_excluded($tag, $excluded_scripts)) {
+        // Skip if already processed
+        if (strpos($tag, 'rocketlazyloadscript') !== false) {
             return $tag;
         }
 
-        $attributes = MACP_Script_Attributes::extract_attributes($tag);
-        $src = MACP_Script_Attributes::get_src($tag);
-        $inline_content = MACP_Script_Attributes::get_inline_content($tag);
+        $src = self::get_script_src($tag);
+        $attributes = self::get_script_attributes($tag);
+        $inline_content = self::get_inline_content($tag);
+
+        // Skip processing for inline config scripts
+        if (self::is_inline_config($tag)) {
+            return $tag;
+        }
 
         // Build new tag
         $new_tag = '<script';
 
-        // Handle script type
-        if (get_option('macp_enable_js_delay', 0)) {
+        // Handle delay functionality
+        if (get_option('macp_enable_js_delay', 0) && !self::is_excluded($src, $excluded_scripts)) {
             $new_tag .= ' type="rocketlazyloadscript"';
+            if ($src) {
+                $new_tag .= ' data-rocket-src="' . esc_attr($src) . '"';
+            }
         } else {
             $new_tag .= ' type="text/javascript"';
-        }
-
-        // Handle src attribute
-        if ($src) {
-            if (get_option('macp_enable_js_delay', 0)) {
-                $new_tag .= ' data-rocket-src="' . $src . '"';
-            } else {
-                $new_tag .= ' src="' . $src . '"';
+            if ($src) {
+                $new_tag .= ' src="' . esc_attr($src) . '"';
             }
         }
 
-        // Add defer attribute if enabled
-        if (get_option('macp_enable_js_defer', 0)) {
+        // Handle defer functionality
+        if (get_option('macp_enable_js_defer', 0) && !self::is_excluded($src, $excluded_scripts)) {
             $new_tag .= ' defer="defer"';
         }
 
         // Add remaining attributes
         foreach ($attributes as $name => $value) {
-            if (!in_array($name, ['type', 'src'])) {
-                $new_tag .= ' ' . $name . '="' . $value . '"';
+            if (!in_array($name, ['type', 'src', 'defer'])) {
+                $new_tag .= ' ' . $name . '="' . esc_attr($value) . '"';
             }
         }
 
@@ -56,5 +57,64 @@ class MACP_Script_Processor {
         }
 
         return $new_tag;
+    }
+
+    /**
+     * Get script src attribute
+     */
+    private static function get_script_src($tag) {
+        if (preg_match('/src=["\']([^"\']+)["\']/', $tag, $match)) {
+            return $match[1];
+        }
+        return null;
+    }
+
+    /**
+     * Get script attributes
+     */
+    private static function get_script_attributes($tag) {
+        $attributes = [];
+        if (preg_match_all('/(\w+)=["\']([^"\']*)["\']/', $tag, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $attributes[$match[1]] = $match[2];
+            }
+        }
+        return $attributes;
+    }
+
+    /**
+     * Get inline script content
+     */
+    private static function get_inline_content($tag) {
+        if (preg_match('/<script[^>]*>(.*?)<\/script>/s', $tag, $match)) {
+            return $match[1];
+        }
+        return '';
+    }
+
+    /**
+     * Check if script is an inline configuration script
+     */
+    private static function is_inline_config($tag) {
+        return strpos($tag, '-js-extra') !== false || 
+               strpos($tag, 'CDATA') !== false ||
+               !preg_match('/\ssrc=["\']([^"\']+)["\']/', $tag);
+    }
+
+    /**
+     * Check if script should be excluded
+     */
+    private static function is_excluded($src, $excluded_scripts) {
+        if (!$src || empty($excluded_scripts)) {
+            return false;
+        }
+
+        foreach ($excluded_scripts as $excluded_script) {
+            if (!empty($excluded_script) && strpos($src, $excluded_script) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

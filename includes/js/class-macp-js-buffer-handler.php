@@ -30,7 +30,6 @@ class MACP_JS_Buffer_Handler {
             return $html;
         }
 
-        // Process all script tags, including those in head
         return preg_replace_callback(
             '/<script\b[^>]*>.*?<\/script>/is',
             function($matches) {
