@@ -8,15 +8,12 @@ Author: Your Name
 
 if (!defined('ABSPATH')) exit;
 
-// Define constants
 define('MACP_PLUGIN_FILE', __FILE__);
 define('MACP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 // Load Composer autoloader
 if (file_exists(MACP_PLUGIN_DIR . 'vendor/autoload.php')) {
     require_once MACP_PLUGIN_DIR . 'vendor/autoload.php';
-} else {
-    error_log('Autoload file missing. MACP Plugin may not function properly.');
 }
 
 // Load utility classes first
@@ -29,16 +26,16 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-redis.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-cache-helper.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-html-cache.php';
 
-// Load CSS related classes
-require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-config.php';
-require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-extractor.php';
-require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-optimizer.php';
-
 // Load minification classes
 require_once MACP_PLUGIN_DIR . 'includes/minify/class-macp-html-minifier.php';
 require_once MACP_PLUGIN_DIR . 'includes/minify/class-macp-minify-css.php';
 require_once MACP_PLUGIN_DIR . 'includes/minify/class-macp-minify-js.php';
 require_once MACP_PLUGIN_DIR . 'includes/minify/class-macp-minify-html.php';
+
+// Load CSS optimization classes
+require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-config.php';
+require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-extractor.php';
+require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-optimizer.php';
 
 // Load JavaScript optimization classes
 require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-script-attributes.php';
@@ -53,7 +50,11 @@ require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-js-tag-processor.php';
 require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-defer-handler.php';
 require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-delay-handler.php';
 
-// Load admin classes
+// Load Varnish-related classes
+require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-vcl-generator.php';
+require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-varnish.php';
+
+// Load admin classes - Note the order is important!
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-settings-manager.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-admin-settings.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-admin-assets.php';
@@ -64,12 +65,11 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug-utility.php';
 
 // Initialize the plugin
 function MACP() {
-    static $instance = null;
-    if (null === $instance) {
-        $instance = MACP_Plugin::get_instance();
-    }
-    return $instance;
+    return MACP_Plugin::get_instance();
 }
 
 // Start the plugin
 add_action('plugins_loaded', 'MACP');
+
+// Include the main plugin class last
+require_once MACP_PLUGIN_DIR . 'includes/class-macp-plugin.php';

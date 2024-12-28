@@ -4,7 +4,7 @@
  */
 class MACP_JS_Optimizer {
     private $excluded_scripts = [];
-    private $buffer_handler = null;
+    private $buffer_handler;
 
     public function __construct() {
         // Only run on frontend
@@ -22,13 +22,13 @@ class MACP_JS_Optimizer {
     }
 
     public function setup_buffering() {
-        if (get_option('macp_enable_js_delay', 0) && $this->buffer_handler) {
+        if (get_option('macp_enable_js_delay', 0)) {
             $this->buffer_handler->start_buffering();
         }
     }
 
     public function end_buffering() {
-        if (get_option('macp_enable_js_delay', 0) && $this->buffer_handler) {
+        if (get_option('macp_enable_js_delay', 0)) {
             $this->buffer_handler->end_buffering();
         }
     }

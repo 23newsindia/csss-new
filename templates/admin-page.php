@@ -53,8 +53,6 @@
             <!-- Optimization Options -->
             <div class="macp-card">
                 <h2>Optimization Options</h2>
-              
-              <?php include MACP_PLUGIN_DIR . 'templates/mobile-cpcss.php'; ?>
                 
                 <label class="macp-toggle">
                     <input type="checkbox" name="macp_minify_html" value="1" <?php checked($settings['minify_html'], 1); ?>>

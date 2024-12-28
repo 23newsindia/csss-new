@@ -3,6 +3,7 @@ class MACP_CSS_Config {
     public static function get_safelist() {
         $saved_safelist = get_option('macp_css_safelist', []);
         
+        // Default WordPress classes that should never be removed
         $default_safelist = [
             'wp-*',
             'admin-bar*',
@@ -32,10 +33,12 @@ class MACP_CSS_Config {
     }
 
     public static function save_safelist($patterns) {
-        update_option('macp_css_safelist', array_filter(array_map('sanitize_text_field', $patterns)));
+        $patterns = array_map('sanitize_text_field', $patterns);
+        update_option('macp_css_safelist', array_filter($patterns));
     }
 
     public static function save_excluded_patterns($patterns) {
-        update_option('macp_css_excluded_patterns', array_filter(array_map('sanitize_text_field', $patterns)));
+        $patterns = array_map('sanitize_text_field', $patterns);
+        update_option('macp_css_excluded_patterns', array_filter($patterns));
     }
 }

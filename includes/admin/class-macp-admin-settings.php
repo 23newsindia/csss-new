@@ -4,14 +4,9 @@
  */
 class MACP_Admin_Settings {
     private $settings_manager;
-    private $filesystem;
-    private $mobile_cpcss_handler;
 
     public function __construct() {
         $this->settings_manager = new MACP_Settings_Manager();
-        $this->filesystem = new MACP_Filesystem();
-        $this->mobile_cpcss_handler = new MACP_Mobile_CPCSS_Handler($this->settings_manager, $this->filesystem);
-        
         add_action('wp_ajax_macp_toggle_setting', [$this, 'ajax_toggle_setting']);
         add_action('wp_ajax_macp_save_textarea', [$this, 'ajax_save_textarea']);
         add_action('wp_ajax_macp_clear_cache', [$this, 'ajax_clear_cache']);
