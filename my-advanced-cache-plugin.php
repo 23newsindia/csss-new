@@ -63,6 +63,10 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-admin.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-admin-bar.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug-utility.php';
 
+// criticalcss
+require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css.php';
+require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css-generation.php';
+
 // Initialize the plugin
 function MACP() {
     return MACP_Plugin::get_instance();

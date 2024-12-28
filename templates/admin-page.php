@@ -88,7 +88,11 @@
                     <p><strong>Note:</strong> Removing unused CSS is an experimental feature. Please test thoroughly on a staging site first. Some dynamic content or JavaScript-added classes might be affected.</p>
                 </div>
             </div>
+          
+          <!-- Critical CSS Section -->
+            <?php include MACP_PLUGIN_DIR . 'templates/critical-css-section.php'; ?>
 
+          
             <?php submit_button('Save Changes', 'primary', 'macp_save_settings'); ?>
         </form>
     </div>

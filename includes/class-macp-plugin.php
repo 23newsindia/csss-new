@@ -12,6 +12,8 @@ class MACP_Plugin {
     private $varnish;
     private $varnish_settings;
     private $script_handler;
+    private $settings_manager;
+    private $critical_css;
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -29,6 +31,9 @@ class MACP_Plugin {
         register_activation_hook(MACP_PLUGIN_FILE, [$this, 'activate']);
         register_deactivation_hook(MACP_PLUGIN_FILE, [$this, 'deactivate']);
 
+        // Initialize settings manager first
+        $this->settings_manager = new MACP_Settings_Manager();
+
         // Initialize components
         $this->redis = new MACP_Redis();
         $this->html_cache = new MACP_HTML_Cache();
@@ -36,6 +41,9 @@ class MACP_Plugin {
         $this->admin = new MACP_Admin($this->redis);
         $this->admin_bar = new MACP_Admin_Bar();
         $this->script_handler = new MACP_Script_Handler();
+        
+        // Initialize Critical CSS
+        $this->critical_css = new MACP_Critical_CSS($this->settings_manager);
         
         // Initialize Varnish if enabled
         if (get_option('macp_enable_varnish', 0)) {
@@ -84,6 +92,7 @@ class MACP_Plugin {
         add_option('macp_enable_varnish', 0);
         add_option('macp_varnish_servers', ['127.0.0.1']);
         add_option('macp_varnish_port', 6081);
+        add_option('macp_enable_critical_css', 0);
     }
 
     public function deactivate() {
