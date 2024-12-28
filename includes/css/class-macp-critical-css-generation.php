@@ -1,7 +1,9 @@
 <?php
-/**
- * Handles the actual generation of Critical CSS
- */
+require_once dirname(__FILE__) . '/utils/class-macp-css-extractor.php';
+require_once dirname(__FILE__) . '/utils/class-macp-url-helper.php';
+require_once dirname(__FILE__) . '/utils/class-macp-css-optimizer.php';
+require_once dirname(__FILE__) . '/generators/class-macp-template-css-generator.php';
+
 class MACP_Critical_CSS_Generator {
     private $filesystem;
     private $base_dir;
@@ -13,22 +15,17 @@ class MACP_Critical_CSS_Generator {
     }
 
     private function init() {
-        // Create base directory if it doesn't exist
         if (!file_exists($this->base_dir)) {
             wp_mkdir_p($this->base_dir);
         }
     }
 
     public function generate_mobile_css() {
-        // Create directory if it doesn't exist
-        if (!file_exists($this->base_dir)) {
-            if (!wp_mkdir_p($this->base_dir)) {
-                return false;
-            }
+        if (!file_exists($this->base_dir) && !wp_mkdir_p($this->base_dir)) {
+            return false;
         }
 
-        // Get templates to generate CSS for
-        $templates = $this->get_templates_list();
+        $templates = MACP_Template_CSS_Generator::get_templates_list();
         
         foreach ($templates as $key => $url) {
             if ($url) {
@@ -39,20 +36,10 @@ class MACP_Critical_CSS_Generator {
         return true;
     }
 
-    private function get_templates_list() {
-        return [
-            'front_page' => home_url('/'),
-            'blog' => get_permalink(get_option('page_for_posts')),
-            'post' => $this->get_latest_post_url(),
-            'page' => $this->get_sample_page_url()
-        ];
-    }
-
     private function generate_template_css($key, $url) {
         $filename = $key . '-mobile.css';
         $filepath = $this->base_dir . $filename;
 
-        // Generate CSS content
         $css = $this->extract_critical_css($url);
         
         if ($css) {
@@ -72,72 +59,22 @@ class MACP_Critical_CSS_Generator {
         }
 
         $html = wp_remote_retrieve_body($response);
-        
-        // Extract all CSS
         $css = '';
 
         // Get inline styles
-        preg_match_all('/<style[^>]*>(.*?)<\/style>/s', $html, $matches);
-        if (!empty($matches[1])) {
-            $css .= implode("\n", $matches[1]);
-        }
+        $inline_styles = MACP_CSS_Extractor::extract_inline_styles($html);
+        $css .= implode("\n", $inline_styles);
 
         // Get external stylesheets
-        preg_match_all('/<link[^>]*rel=[\'"]stylesheet[\'"][^>]*href=[\'"]([^\'"]+)[\'"][^>]*>/i', $html, $matches);
-        if (!empty($matches[1])) {
-            foreach ($matches[1] as $stylesheet) {
-                $style_url = $this->make_absolute_url($stylesheet, $url);
-                $style_content = $this->get_external_css($style_url);
-                if ($style_content) {
-                    $css .= "\n" . $style_content;
-                }
+        $stylesheets = MACP_CSS_Extractor::extract_external_stylesheets($html);
+        foreach ($stylesheets as $stylesheet) {
+            $style_url = MACP_CSS_URL_Helper::make_absolute_url($stylesheet, $url);
+            $style_content = MACP_CSS_Extractor::get_external_css($style_url);
+            if ($style_content) {
+                $css .= "\n" . $style_content;
             }
         }
 
-        return $this->optimize_css($css);
-    }
-
-    private function get_external_css($url) {
-        $response = wp_remote_get($url);
-        if (!is_wp_error($response)) {
-            return wp_remote_retrieve_body($response);
-        }
-        return false;
-    }
-
-    private function make_absolute_url($url, $base) {
-        if (strpos($url, 'http') !== 0) {
-            if (strpos($url, '//') === 0) {
-                return 'https:' . $url;
-            }
-            if (strpos($url, '/') === 0) {
-                $parsed = parse_url($base);
-                return $parsed['scheme'] . '://' . $parsed['host'] . $url;
-            }
-        }
-        return $url;
-    }
-
-    private function optimize_css($css) {
-        // Remove comments
-        $css = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $css);
-        
-        // Remove whitespace
-        $css = preg_replace('/\s+/', ' ', $css);
-        
-        // Remove media queries (for mobile)
-        $css = preg_replace('/@media\s+[^{]+\{([^{}]*\{[^{}]*\})*[^{}]*\}/i', '', $css);
-        
-        return trim($css);
-    }
-
-    private function get_latest_post_url() {
-        $posts = get_posts(['numberposts' => 1]);
-        return !empty($posts) ? get_permalink($posts[0]) : false;
-    }
-
-    private function get_sample_page_url() {
-        $pages = get_pages(['number' => 1]);
-        return !empty($pages) ? get_permalink($pages[0]) : false;
+        return MACP_CSS_Optimizer::optimize($css);
     }
 }

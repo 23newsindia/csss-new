@@ -30,7 +30,6 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-cache-helper.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-html-cache.php';
 
 // Load CSS related classes
-require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-critical-css-generator.php';
 require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-config.php';
 require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-extractor.php';
 require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-optimizer.php';
@@ -54,22 +53,14 @@ require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-js-tag-processor.php';
 require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-defer-handler.php';
 require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-delay-handler.php';
 
-// Load Varnish-related classes
-require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-vcl-generator.php';
-require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-varnish.php';
-
 // Load admin classes
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-settings-manager.php';
-require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-mobile-cpcss-handler.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-admin-settings.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-admin-assets.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-varnish-settings.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-admin.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-admin-bar.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug-utility.php';
-
-// Load main plugin class
-require_once MACP_PLUGIN_DIR . 'includes/class-macp-plugin.php';
 
 // Initialize the plugin
 function MACP() {
