@@ -7,6 +7,7 @@ if (!isset($settings_manager)) {
 }
 
 $mobile_cpcss_active = $settings_manager->get_setting('async_css_mobile', 0);
+$is_generating = get_option('macp_mobile_cpcss_generating', false);
 ?>
 <div id="macp-mobile-cpcss-view" class="macp-card">
     <h2><?php esc_html_e('Mobile Critical CSS', 'my-advanced-cache-plugin'); ?></h2>
@@ -21,15 +22,23 @@ $mobile_cpcss_active = $settings_manager->get_setting('async_css_mobile', 0);
     <?php endif; ?>
 
     <label class="macp-toggle">
-        <input type="checkbox" name="macp_async_css_mobile" value="1" <?php checked($mobile_cpcss_active, 1); ?>>
+        <input type="checkbox" 
+               name="macp_async_css_mobile" 
+               value="1" 
+               <?php checked($mobile_cpcss_active, 1); ?>
+               data-nonce="<?php echo wp_create_nonce('macp_admin_nonce'); ?>">
         <span class="macp-toggle-slider"></span>
         <?php esc_html_e('Enable Mobile-Specific Critical CSS', 'my-advanced-cache-plugin'); ?>
     </label>
 
     <?php if ($mobile_cpcss_active): ?>
     <div class="macp-action-buttons" style="margin-top: 15px;">
-        <button type="button" id="macp-generate-mobile-cpcss" class="button button-secondary">
-            <?php esc_html_e('Regenerate Mobile Critical CSS', 'my-advanced-cache-plugin'); ?>
+        <button type="button" 
+                id="macp-generate-mobile-cpcss" 
+                class="button button-secondary"
+                <?php echo $is_generating ? 'disabled' : ''; ?>
+                data-nonce="<?php echo wp_create_nonce('macp_admin_nonce'); ?>">
+            <?php echo $is_generating ? 'Generating...' : 'Regenerate Mobile Critical CSS'; ?>
         </button>
     </div>
     <?php endif; ?>

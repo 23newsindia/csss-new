@@ -54,8 +54,9 @@ require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-delay-handler.php';
 require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-vcl-generator.php';
 require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-varnish.php';
 
-// Load admin classes - Note the order is important!
+// Load admin classes
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-settings-manager.php';
+require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-mobile-cpcss-handler.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-admin-settings.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-admin-assets.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-varnish-settings.php';

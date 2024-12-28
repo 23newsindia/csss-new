@@ -2,7 +2,7 @@
 /**
  * Handles AJAX requests for mobile critical CSS
  */
-class MACP_Mobile_CPCSS_Ajax_Handler {
+class MACP_Mobile_CPCSS_Handler {
     private $settings_manager;
     private $filesystem;
 

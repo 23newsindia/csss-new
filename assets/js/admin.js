@@ -1,39 +1,9 @@
 jQuery(document).ready(function($) {
-    // Handle mobile CPCSS generation
-    $('#macp-generate-mobile-cpcss').on('click', function(e) {
-        e.preventDefault();
-        const $button = $(this);
-
-        $button.prop('disabled', true)
-               .text('Generating...');
-
-        $.ajax({
-            url: ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'macp_generate_mobile_cpcss',
-                nonce: macp_admin.nonce
-            },
-            success: function(response) {
-                if (response.success) {
-                    $button.text('Generation Started!');
-                    setTimeout(function() {
-                        $button.text('Regenerate Mobile Critical CSS')
-                              .prop('disabled', false);
-                    }, 2000);
-                }
-            },
-            error: function() {
-                $button.text('Error!')
-                      .prop('disabled', false);
-            }
-        });
-    });
-
     // Handle mobile CPCSS toggle
     $('input[name="macp_async_css_mobile"]').on('change', function() {
         const $checkbox = $(this);
         const value = $checkbox.prop('checked') ? 1 : 0;
+        const nonce = $checkbox.data('nonce');
 
         $checkbox.prop('disabled', true);
 
@@ -43,7 +13,7 @@ jQuery(document).ready(function($) {
             data: {
                 action: 'macp_toggle_mobile_cpcss',
                 value: value,
-                nonce: macp_admin.nonce
+                nonce: nonce
             },
             success: function(response) {
                 if (response.success) {
@@ -57,6 +27,38 @@ jQuery(document).ready(function($) {
             },
             complete: function() {
                 $checkbox.prop('disabled', false);
+            }
+        });
+    });
+
+  
+    // Handle mobile CPCSS generation
+    $('#macp-generate-mobile-cpcss').on('click', function(e) {
+        e.preventDefault();
+        const $button = $(this);
+        const nonce = $button.data('nonce');
+
+        $button.prop('disabled', true)
+               .text('Generating...');
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'macp_generate_mobile_cpcss',
+                nonce: nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    $button.text('Generation Started!');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                }
+            },
+            error: function() {
+                $button.text('Error!')
+                      .prop('disabled', false);
             }
         });
     });
