@@ -20,10 +20,12 @@ jQuery(document).ready(function($) {
                     location.reload();
                 } else {
                     $checkbox.prop('checked', !value);
+                    alert('Failed to update setting: ' + (response.data || 'Unknown error'));
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
                 $checkbox.prop('checked', !value);
+                alert('Failed to update setting: ' + error);
             },
             complete: function() {
                 $checkbox.prop('disabled', false);
@@ -31,12 +33,15 @@ jQuery(document).ready(function($) {
         });
     });
 
-  
     // Handle mobile CPCSS generation
     $('#macp-generate-mobile-cpcss').on('click', function(e) {
         e.preventDefault();
         const $button = $(this);
         const nonce = $button.data('nonce');
+
+        if ($button.prop('disabled')) {
+            return;
+        }
 
         $button.prop('disabled', true)
                .text('Generating...');
@@ -50,19 +55,30 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    $button.text('Generation Started!');
+                    $button.text('Generation Complete!');
                     setTimeout(function() {
                         location.reload();
                     }, 2000);
+                } else {
+                    $button.text('Error: ' + (response.data || 'Unknown error'));
+                    setTimeout(function() {
+                        $button.text('Regenerate Mobile Critical CSS')
+                              .prop('disabled', false);
+                    }, 3000);
                 }
             },
-            error: function() {
-                $button.text('Error!')
-                      .prop('disabled', false);
+            error: function(xhr, status, error) {
+                $button.text('Error: ' + error);
+                setTimeout(function() {
+                    $button.text('Regenerate Mobile Critical CSS')
+                          .prop('disabled', false);
+                }, 3000);
             }
         });
     });
+});
 
+  
     // Auto-save functionality for textareas
     let textareaTimeout;
     $('.macp-exclusion-section textarea').on('input', function() {

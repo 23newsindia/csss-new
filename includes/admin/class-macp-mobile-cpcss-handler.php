@@ -4,11 +4,11 @@
  */
 class MACP_Mobile_CPCSS_Handler {
     private $settings_manager;
-    private $filesystem;
+    private $css_generator;
 
-    public function __construct(MACP_Settings_Manager $settings_manager, $filesystem) {
+    public function __construct(MACP_Settings_Manager $settings_manager) {
         $this->settings_manager = $settings_manager;
-        $this->filesystem = $filesystem;
+        $this->css_generator = new MACP_Critical_CSS_Generator();
         $this->init_hooks();
     }
 
@@ -18,19 +18,27 @@ class MACP_Mobile_CPCSS_Handler {
     }
 
     public function generate_mobile_cpcss() {
-        check_ajax_referer('macp_admin_nonce', 'nonce');
+        if (!check_ajax_referer('macp_admin_nonce', 'nonce', false)) {
+            wp_send_json_error('Invalid nonce');
+        }
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Unauthorized');
         }
 
-        update_option('macp_mobile_cpcss_generating', true);
-        
-        wp_send_json_success(['message' => 'Mobile Critical CSS generation started']);
+        // Start generation
+        if ($this->css_generator->generate_mobile_css()) {
+            update_option('macp_mobile_cpcss_generating', false);
+            wp_send_json_success(['message' => 'Mobile Critical CSS generated successfully']);
+        } else {
+            wp_send_json_error('Failed to generate Critical CSS');
+        }
     }
 
     public function toggle_mobile_cpcss() {
-        check_ajax_referer('macp_admin_nonce', 'nonce');
+        if (!check_ajax_referer('macp_admin_nonce', 'nonce', false)) {
+            wp_send_json_error('Invalid nonce');
+        }
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Unauthorized');
@@ -41,7 +49,7 @@ class MACP_Mobile_CPCSS_Handler {
         if ($this->settings_manager->update_setting('async_css_mobile', $value)) {
             wp_send_json_success(['message' => 'Setting updated successfully']);
         } else {
-            wp_send_json_error(['message' => 'Failed to update setting']);
+            wp_send_json_error('Failed to update setting');
         }
     }
 }

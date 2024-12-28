@@ -1,89 +1,143 @@
 <?php
 /**
- * Handles the background process for critical CSS generation
+ * Handles the actual generation of Critical CSS
  */
-class MACP_Critical_CSS_Generation extends WP_Background_Process {
-    protected $action = 'critical_css_generation';
-    protected $processor;
-
-    public function __construct(MACP_Critical_CSS_Processor $processor) {
-        parent::__construct();
-        $this->processor = $processor;
+class MACP_Critical_CSS_Generator {
+    private $filesystem;
+    private $base_dir;
+    
+    public function __construct() {
+        $this->filesystem = new MACP_Filesystem();
+        $this->base_dir = WP_CONTENT_DIR . '/cache/macp/critical-css/';
+        $this->init();
     }
 
-    protected function task($item) {
-        if (!is_array($item)) {
-            return false;
+    private function init() {
+        // Create base directory if it doesn't exist
+        if (!file_exists($this->base_dir)) {
+            wp_mkdir_p($this->base_dir);
         }
+    }
 
-        $transient = get_transient('macp_critical_css_generation_running');
-        $mobile = isset($item['mobile']) ? $item['mobile'] : 0;
-
-        $generation_params = [
-            'is_mobile' => $mobile,
-            'item_type' => $item['type']
-        ];
-
-        $generated = $this->processor->generate($item['url'], $item['path'], $generation_params);
-
-        if (is_wp_error($generated)) {
-            $this->update_running_transient($transient, $item['path'], $mobile, $generated->get_error_message(), false);
-            return false;
-        }
-
-        if (isset($generated['code']) && 'generation_pending' === $generated['code']) {
-            $pending = get_transient('macp_cpcss_generation_pending');
-            
-            if (false === $pending) {
-                $pending = [];
+    public function generate_mobile_css() {
+        // Create directory if it doesn't exist
+        if (!file_exists($this->base_dir)) {
+            if (!wp_mkdir_p($this->base_dir)) {
+                return false;
             }
-
-            $pending[$item['path']] = $item;
-            set_transient('macp_cpcss_generation_pending', $pending, HOUR_IN_SECONDS);
-            return false;
         }
 
-        $this->update_running_transient(
-            $transient, 
-            $item['path'], 
-            $mobile, 
-            $generated['message'], 
-            ('generation_successful' === $generated['code'])
-        );
+        // Get templates to generate CSS for
+        $templates = $this->get_templates_list();
+        
+        foreach ($templates as $key => $url) {
+            if ($url) {
+                $this->generate_template_css($key, $url);
+            }
+        }
 
+        return true;
+    }
+
+    private function get_templates_list() {
+        return [
+            'front_page' => home_url('/'),
+            'blog' => get_permalink(get_option('page_for_posts')),
+            'post' => $this->get_latest_post_url(),
+            'page' => $this->get_sample_page_url()
+        ];
+    }
+
+    private function generate_template_css($key, $url) {
+        $filename = $key . '-mobile.css';
+        $filepath = $this->base_dir . $filename;
+
+        // Generate CSS content
+        $css = $this->extract_critical_css($url);
+        
+        if ($css) {
+            return file_put_contents($filepath, $css);
+        }
+        
         return false;
     }
 
-    protected function complete() {
-        parent::complete();
+    private function extract_critical_css($url) {
+        $response = wp_remote_get($url, [
+            'user-agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
+        ]);
+
+        if (is_wp_error($response)) {
+            return false;
+        }
+
+        $html = wp_remote_retrieve_body($response);
         
-        $transient = get_transient('macp_critical_css_generation_running');
-        set_transient('macp_critical_css_generation_complete', $transient, HOUR_IN_SECONDS);
-        delete_transient('macp_critical_css_generation_running');
-        
-        do_action('macp_critical_css_generation_complete');
+        // Extract all CSS
+        $css = '';
+
+        // Get inline styles
+        preg_match_all('/<style[^>]*>(.*?)<\/style>/s', $html, $matches);
+        if (!empty($matches[1])) {
+            $css .= implode("\n", $matches[1]);
+        }
+
+        // Get external stylesheets
+        preg_match_all('/<link[^>]*rel=[\'"]stylesheet[\'"][^>]*href=[\'"]([^\'"]+)[\'"][^>]*>/i', $html, $matches);
+        if (!empty($matches[1])) {
+            foreach ($matches[1] as $stylesheet) {
+                $style_url = $this->make_absolute_url($stylesheet, $url);
+                $style_content = $this->get_external_css($style_url);
+                if ($style_content) {
+                    $css .= "\n" . $style_content;
+                }
+            }
+        }
+
+        return $this->optimize_css($css);
     }
 
-    private function update_running_transient($transient, $path, $is_mobile, $message, $success) {
-        if (!is_array($transient)) {
-            $transient = [
-                'total' => 0,
-                'items' => []
-            ];
+    private function get_external_css($url) {
+        $response = wp_remote_get($url);
+        if (!is_wp_error($response)) {
+            return wp_remote_retrieve_body($response);
         }
+        return false;
+    }
 
-        if (!isset($transient['items'][$path])) {
-            $transient['items'][$path] = [
-                'status' => []
-            ];
+    private function make_absolute_url($url, $base) {
+        if (strpos($url, 'http') !== 0) {
+            if (strpos($url, '//') === 0) {
+                return 'https:' . $url;
+            }
+            if (strpos($url, '/') === 0) {
+                $parsed = parse_url($base);
+                return $parsed['scheme'] . '://' . $parsed['host'] . $url;
+            }
         }
+        return $url;
+    }
 
-        $type = $is_mobile ? 'mobile' : 'nonmobile';
-        $transient['items'][$path]['status'][$type] = [
-            'success' => $success,
-            'message' => $message
-        ];
+    private function optimize_css($css) {
+        // Remove comments
+        $css = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $css);
+        
+        // Remove whitespace
+        $css = preg_replace('/\s+/', ' ', $css);
+        
+        // Remove media queries (for mobile)
+        $css = preg_replace('/@media\s+[^{]+\{([^{}]*\{[^{}]*\})*[^{}]*\}/i', '', $css);
+        
+        return trim($css);
+    }
 
-        set_transient('macp_critical_css_generation_running', $transient, HOUR_IN_SECONDS);
+    private function get_latest_post_url() {
+        $posts = get_posts(['numberposts' => 1]);
+        return !empty($posts) ? get_permalink($posts[0]) : false;
+    }
+
+    private function get_sample_page_url() {
+        $pages = get_pages(['number' => 1]);
+        return !empty($pages) ? get_permalink($pages[0]) : false;
     }
 }
