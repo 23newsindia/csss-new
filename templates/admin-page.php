@@ -107,6 +107,9 @@ $redis_info = $redis_status->get_status();
                     Process External CSS
                 </label>
             </div>
+          <!-- Include lazy load settings -->
+            <?php include MACP_PLUGIN_DIR . 'templates/lazy-load-settings.php'; ?>
+
 
             <!-- Include other sections -->
             <?php include MACP_PLUGIN_DIR . 'templates/css-exclusions.php'; ?>

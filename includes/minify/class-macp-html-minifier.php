@@ -4,15 +4,26 @@ class MACP_HTML_Minifier {
         'remove_comments' => true,
         'remove_whitespace' => true,
         'remove_blank_lines' => true,
-        'compress_js' => true,
-        'compress_css' => true,
-        'preserve_conditional_comments' => true
+        'compress_js' => false, // Disabled to prevent JS issues
+        'compress_css' => false, // Disabled to prevent CSS issues
+        'preserve_conditional_comments' => true,
+        'preserve_data_attributes' => true // Added to preserve data attributes
     ];
 
     private $preserved_tags = [
         'pre',
         'textarea',
         'script',
+        'style',
+        'code',
+        'noscript'
+    ];
+
+    private $preserved_attributes = [
+        'data-',
+        'on',
+        'id',
+        'class',
         'style'
     ];
 
@@ -37,6 +48,13 @@ class MACP_HTML_Minifier {
             }, $html);
         }
 
+        // Preserve script tags with their content
+        $html = preg_replace_callback('/<script\b[^>]*>(.*?)<\/script>/is', function($matches) use (&$preservedTokens) {
+            $token = '<!--PRESERVED' . count($preservedTokens) . '-->';
+            $preservedTokens[$token] = $matches[0];
+            return $token;
+        }, $html);
+
         // Preserve content in special tags
         foreach ($this->preserved_tags as $tag) {
             $html = preg_replace_callback('/<' . $tag . '([^>]*?)>(.*?)<\/' . $tag . '>/is', function($matches) use (&$preservedTokens) {
@@ -46,37 +64,23 @@ class MACP_HTML_Minifier {
             }, $html);
         }
 
+        // Preserve data attributes and event handlers
+        $html = preg_replace_callback('/\s+((?:data-|on)[a-zA-Z-]+)="[^"]*"/', function($matches) use (&$preservedTokens) {
+            $token = '<!--PRESERVED' . count($preservedTokens) . '-->';
+            $preservedTokens[$token] = $matches[0];
+            return $token;
+        }, $html);
+
         // Remove HTML comments (not containing IE conditional comments)
         if ($this->options['remove_comments']) {
             $html = preg_replace('/<!--(?!\s*(?:\[if [^\]]+]|<!|>))(?:(?!-->).)*-->/s', '', $html);
         }
 
-        // Remove whitespace
+        // Remove whitespace more carefully
         if ($this->options['remove_whitespace']) {
-            // Remove whitespace between HTML tags
-            $html = preg_replace('/>\s+</s', '><', $html);
-            
-            // Remove whitespace at the start of HTML tags
-            $html = preg_replace('/\s+>/s', '>', $html);
-            
-            // Remove whitespace at the end of HTML tags
-            $html = preg_replace('/<\s+/s', '<', $html);
-            
-            // Compress multiple spaces to a single space
-            $html = preg_replace('/\s{2,}/s', ' ', $html);
-            
-            // Remove spaces around common HTML elements
-            $html = preg_replace('/\s+(<\/?(?:img|input|br|hr|meta|link)([^>]*)>)\s+/is', '$1', $html);
-            
-            // Clean up whitespace around block elements
-            $html = preg_replace('/\s+(<\/?(?:div|p|table|tr|td|th|ul|ol|li|h[1-6]|header|footer|section|article)(?:\s[^>]*)?>)\s+/is', '$1', $html);
-        }
-
-        // Remove blank lines
-        if ($this->options['remove_blank_lines']) {
-            $html = preg_replace("/^\s+/m", "", $html);
-            $html = preg_replace("/\n\s+/m", "\n", $html);
-            $html = preg_replace("/\n+/s", "\n", $html);
+            // Preserve whitespace in specific elements
+            $html = preg_replace('/>\s+<(?!\/(?:textarea|pre|script|style|code))/i', '><', $html);
+            $html = preg_replace('/\s{2,}/', ' ', $html);
         }
 
         // Restore preserved content
@@ -84,33 +88,6 @@ class MACP_HTML_Minifier {
             $html = str_replace($token, $content, $html);
         }
 
-        // Final cleanup
-        $html = trim($html);
-
-        return $html;
-    }
-
-    private function minify_js($script) {
-        if (preg_match('/<script[^>]*>(.*?)<\/script>/is', $script, $matches)) {
-            $js = $matches[1];
-            // Basic JS minification
-            $js = preg_replace('/(?:(?:\/\*(?:[^*]|(?:\*+[^*\/]))*\*+\/)|(?:(?<!\:|\\\|\'|\")\/\/.*))/', '', $js);
-            $js = preg_replace('/\s+/', ' ', $js);
-            $js = str_replace(['; ', ' {', '{ ', ' }', '} ', ', ', ' (', ') '], [';', '{', '{', '}', '}', ',', '(', ')'], $js);
-            return str_replace($matches[1], $js, $script);
-        }
-        return $script;
-    }
-
-    private function minify_css($style) {
-        if (preg_match('/<style[^>]*>(.*?)<\/style>/is', $style, $matches)) {
-            $css = $matches[1];
-            // Basic CSS minification
-            $css = preg_replace('/\/\*(?:.*?)*?\*\//', '', $css);
-            $css = preg_replace('/\s+/', ' ', $css);
-            $css = str_replace([': ', ' {', '{ ', ' }', '} ', ', ', ' ;'], [':', '{', '{', '}', '}', ',', ';'], $css);
-            return str_replace($matches[1], $css, $style);
-        }
-        return $style;
+        return trim($html);
     }
 }

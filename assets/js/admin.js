@@ -20,6 +20,40 @@ jQuery(document).ready(function($) {
             });
         }, 1000); // Save after 1 second of no typing
     });
+  
+  
+  
+   $('.macp-toggle input[name="macp_enable_lazy_load"]').on('change', function() {
+        const $checkbox = $(this);
+        const value = $checkbox.prop('checked') ? 1 : 0;
+
+        $checkbox.prop('disabled', true);
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'macp_toggle_setting',
+                option: 'macp_enable_lazy_load',
+                value: value,
+                nonce: macp_admin.nonce
+            },
+            success: function(response) {
+                if (!response.success) {
+                    $checkbox.prop('checked', !value);
+                }
+            },
+            error: function() {
+                $checkbox.prop('checked', !value);
+            },
+            complete: function() {
+                $checkbox.prop('disabled', false);
+            }
+        });
+  });
+  
+  
+  
 
     // Handle toggle switches
     $('.macp-toggle input[type="checkbox"]').on('change', function() {

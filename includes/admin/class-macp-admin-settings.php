@@ -5,12 +5,19 @@
 class MACP_Admin_Settings {
     private $settings_manager;
 
-    public function __construct() {
+     public function __construct() {
         $this->settings_manager = new MACP_Settings_Manager();
         add_action('wp_ajax_macp_toggle_setting', [$this, 'ajax_toggle_setting']);
         add_action('wp_ajax_macp_save_textarea', [$this, 'ajax_save_textarea']);
         add_action('wp_ajax_macp_clear_cache', [$this, 'ajax_clear_cache']);
+        add_action('admin_init', [$this, 'register_settings']);
     }
+  
+   public function register_settings() {
+        register_setting('macp_settings', 'macp_enable_lazy_load');
+        register_setting('macp_settings', 'macp_lazy_load_excluded');
+    }
+
 
     public function get_all_settings() {
         return $this->settings_manager->get_all_settings();
@@ -26,13 +33,14 @@ class MACP_Admin_Settings {
         $option = sanitize_key($_POST['option']);
         $value = (int)$_POST['value'];
 
-        if ($this->settings_manager->update_setting($option, $value)) {
+        if (update_option($option, $value)) {
             do_action('macp_settings_updated', $option, $value);
             wp_send_json_success(['message' => 'Setting updated successfully']);
         } else {
             wp_send_json_error(['message' => 'Failed to update setting']);
         }
     }
+
 
     public function ajax_save_textarea() {
         check_ajax_referer('macp_admin_nonce', 'nonce');
