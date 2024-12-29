@@ -21,13 +21,18 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-filesystem.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-url-helper.php';
 
+// Load Redis classes
+require_once MACP_PLUGIN_DIR . 'includes/redis/class-macp-redis-connection.php';
+require_once MACP_PLUGIN_DIR . 'includes/redis/class-macp-redis-status.php';
+require_once MACP_PLUGIN_DIR . 'includes/class-macp-redis.php';
+
 // Load metrics classes
 require_once MACP_PLUGIN_DIR . 'includes/metrics/class-macp-metrics-collector.php';
 require_once MACP_PLUGIN_DIR . 'includes/metrics/class-macp-metrics-calculator.php';
 require_once MACP_PLUGIN_DIR . 'includes/metrics/class-macp-metrics-display.php';
+require_once MACP_PLUGIN_DIR . 'includes/metrics/class-macp-metrics-recorder.php';
 
 // Load core functionality classes
-require_once MACP_PLUGIN_DIR . 'includes/class-macp-redis.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-cache-helper.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-html-cache.php';
 
@@ -67,7 +72,6 @@ require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-varnish-settings.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-admin.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-admin-bar.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug-utility.php';
-require_once MACP_PLUGIN_DIR . 'includes/metrics/class-macp-metrics-recorder.php';
 
 // Load Critical CSS classes
 require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css.php';
