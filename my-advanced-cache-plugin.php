@@ -82,6 +82,10 @@ require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css.ph
 
 require_once MACP_PLUGIN_DIR . 'includes/redis/class-macp-redis-primer.php';
 
+
+require_once MACP_PLUGIN_DIR . 'includes/html/processors/class-macp-html-processor.php';
+
+
 // Include the main plugin class last
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-plugin.php';
 

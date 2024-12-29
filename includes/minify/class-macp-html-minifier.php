@@ -1,25 +1,19 @@
 <?php
 class MACP_HTML_Minifier {
-    private $search = [
-        '/\>[^\S ]+/s',     // Strip whitespaces after tags
-        '/[^\S ]+\</s',     // Strip whitespaces before tags
-        '/(\s)+/s',         // Shorten multiple whitespace sequences
-        '/<!--(.|\s)*?-->/' // Remove HTML comments
-    ];
-    
-    private $replace = [
-        '>',
-        '<',
-        '\\1',
-        ''
-    ];
-
     private $options = [
         'remove_comments' => true,
         'remove_whitespace' => true,
         'remove_blank_lines' => true,
         'compress_js' => true,
-        'compress_css' => true
+        'compress_css' => true,
+        'preserve_conditional_comments' => true
+    ];
+
+    private $preserved_tags = [
+        'pre',
+        'textarea',
+        'script',
+        'style'
     ];
 
     public function __construct($options = []) {
@@ -31,79 +25,69 @@ class MACP_HTML_Minifier {
             return $html;
         }
 
-        // Save conditional comments
-        $conditionals = [];
-        if (preg_match_all('/<!--\[if[^\]]*\]>.*?<!\[endif\]-->/is', $html, $matches)) {
-            foreach ($matches[0] as $i => $match) {
-                $conditionals['%%CONDITIONAL' . $i . '%%'] = $match;
-                $html = str_replace($match, '%%CONDITIONAL' . $i . '%%', $html);
-            }
+        // Store preserved content
+        $preservedTokens = [];
+        
+        // Preserve conditional comments
+        if ($this->options['preserve_conditional_comments']) {
+            $html = preg_replace_callback('/<!--\[if[^\]]*\]>.*?<!\[endif\]-->/is', function($matches) use (&$preservedTokens) {
+                $token = '<!--PRESERVED' . count($preservedTokens) . '-->';
+                $preservedTokens[$token] = $matches[0];
+                return $token;
+            }, $html);
         }
 
-        // Save textarea and pre content
-        $pre_tags = [];
-        if (preg_match_all('/<(pre|textarea)[^>]*>.*?<\/\\1>/is', $html, $matches)) {
-            foreach ($matches[0] as $i => $match) {
-                $pre_tags['%%PRE' . $i . '%%'] = $match;
-                $html = str_replace($match, '%%PRE' . $i . '%%', $html);
-            }
+        // Preserve content in special tags
+        foreach ($this->preserved_tags as $tag) {
+            $html = preg_replace_callback('/<' . $tag . '([^>]*?)>(.*?)<\/' . $tag . '>/is', function($matches) use (&$preservedTokens) {
+                $token = '<!--PRESERVED' . count($preservedTokens) . '-->';
+                $preservedTokens[$token] = $matches[0];
+                return $token;
+            }, $html);
         }
 
-        // Save script content
-        $script_tags = [];
-        if (preg_match_all('/<script[^>]*>.*?<\/script>/is', $html, $matches)) {
-            foreach ($matches[0] as $i => $match) {
-                $script_tags['%%SCRIPT' . $i . '%%'] = $match;
-                $html = str_replace($match, '%%SCRIPT' . $i . '%%', $html);
-            }
-        }
-
-        // Save style content
-        $style_tags = [];
-        if (preg_match_all('/<style[^>]*>.*?<\/style>/is', $html, $matches)) {
-            foreach ($matches[0] as $i => $match) {
-                $style_tags['%%STYLE' . $i . '%%'] = $match;
-                $html = str_replace($match, '%%STYLE' . $i . '%%', $html);
-            }
-        }
-
-        // Process main HTML
+        // Remove HTML comments (not containing IE conditional comments)
         if ($this->options['remove_comments']) {
             $html = preg_replace('/<!--(?!\s*(?:\[if [^\]]+]|<!|>))(?:(?!-->).)*-->/s', '', $html);
         }
 
+        // Remove whitespace
         if ($this->options['remove_whitespace']) {
-            $html = preg_replace($this->search, $this->replace, $html);
-            $html = preg_replace('/\s+/', ' ', $html);
+            // Remove whitespace between HTML tags
+            $html = preg_replace('/>\s+</s', '><', $html);
+            
+            // Remove whitespace at the start of HTML tags
+            $html = preg_replace('/\s+>/s', '>', $html);
+            
+            // Remove whitespace at the end of HTML tags
+            $html = preg_replace('/<\s+/s', '<', $html);
+            
+            // Compress multiple spaces to a single space
+            $html = preg_replace('/\s{2,}/s', ' ', $html);
+            
+            // Remove spaces around common HTML elements
+            $html = preg_replace('/\s+(<\/?(?:img|input|br|hr|meta|link)([^>]*)>)\s+/is', '$1', $html);
+            
+            // Clean up whitespace around block elements
+            $html = preg_replace('/\s+(<\/?(?:div|p|table|tr|td|th|ul|ol|li|h[1-6]|header|footer|section|article)(?:\s[^>]*)?>)\s+/is', '$1', $html);
         }
 
+        // Remove blank lines
         if ($this->options['remove_blank_lines']) {
-            $html = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $html);
+            $html = preg_replace("/^\s+/m", "", $html);
+            $html = preg_replace("/\n\s+/m", "\n", $html);
+            $html = preg_replace("/\n+/s", "\n", $html);
         }
 
         // Restore preserved content
-        $html = strtr($html, $conditionals);
-        $html = strtr($html, $pre_tags);
-
-        // Process and restore scripts
-        if ($this->options['compress_js']) {
-            foreach ($script_tags as $key => $script) {
-                $script = $this->minify_js($script);
-                $script_tags[$key] = $script;
-            }
+        foreach ($preservedTokens as $token => $content) {
+            $html = str_replace($token, $content, $html);
         }
-        $html = strtr($html, $script_tags);
 
-        // Process and restore styles
-        if ($this->options['compress_css']) {
-            foreach ($style_tags as $key => $style) {
-                $style = $this->minify_css($style);
-                $style_tags[$key] = $style;
-            }
-        }
-        $html = strtr($html, $style_tags);
+        // Final cleanup
+        $html = trim($html);
 
-        return trim($html);
+        return $html;
     }
 
     private function minify_js($script) {

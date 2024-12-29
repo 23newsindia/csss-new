@@ -11,12 +11,14 @@ class MACP_HTML_Cache {
     private $css_optimizer;
     private $redis;
     private $metrics_recorder;
+    private $html_processor;
 
     public function __construct() {
         $this->cache_dir = WP_CONTENT_DIR . '/cache/macp/';
         $this->excluded_urls = $this->get_excluded_urls();
         $this->redis = new MACP_Redis();
         $this->metrics_recorder = new MACP_Metrics_Recorder();
+        $this->html_processor = new MACP_HTML_Processor();
         
         if (get_option('macp_remove_unused_css', 0)) {
             $this->css_optimizer = new MACP_CSS_Optimizer();
@@ -58,6 +60,10 @@ class MACP_HTML_Cache {
             $this->metrics_recorder->record_miss('html');
             return $buffer;
         }
+      
+      // Process HTML before caching
+        $buffer = $this->html_processor->process($buffer);
+
 
         // Get cache paths
         $cache_key = MACP_Cache_Helper::get_cache_key();
@@ -65,6 +71,7 @@ class MACP_HTML_Cache {
             'html' => MACP_Cache_Helper::get_cache_path($cache_key),
             'gzip' => MACP_Cache_Helper::get_cache_path($cache_key, true)
         ];
+      
 
         // Save uncompressed version
         if (!MACP_Filesystem::write_file($cache_paths['html'], $buffer)) {
