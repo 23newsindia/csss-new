@@ -5,6 +5,7 @@
 class MACP_Plugin {
     private static $instance = null;
     private $redis;
+    private $redis_primer;
     private $html_cache;
     private $admin;
     private $js_optimizer;
@@ -36,6 +37,11 @@ class MACP_Plugin {
 
         // Initialize settings manager first
         $this->settings_manager = new MACP_Settings_Manager();
+      
+         $this->redis = new MACP_Redis();
+        
+        // Initialize Redis primer
+        $this->redis_primer = new MACP_Redis_Primer($this->redis);
 
         // Initialize Redis
         $this->redis = new MACP_Redis();
@@ -78,7 +84,7 @@ class MACP_Plugin {
         
         // Add hook for Redis cache priming
         if (get_option('macp_enable_redis', 1)) {
-            add_action('init', [$this->redis, 'prime_cache']);
+            add_action('init', [$this->redis_primer, 'prime_cache']);
         }
     }
 

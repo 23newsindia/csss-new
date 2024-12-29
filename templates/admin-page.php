@@ -1,4 +1,10 @@
 <?php defined('ABSPATH') || exit; ?>
+<?php defined('ABSPATH') || exit; 
+
+// Get Redis status
+$redis_status = new MACP_Redis_Status();
+$redis_info = $redis_status->get_status();
+?>
 
 <div class="wrap macp-wrap">
     <h1>
@@ -10,9 +16,23 @@
         <!-- Status Card -->
         <div class="macp-card macp-status-card">
             <h2>Cache Status</h2>
-            <div class="macp-status-indicator <?php echo $settings['enable_html_cache'] ? 'active' : 'inactive'; ?>">
-                <?php echo $settings['enable_html_cache'] ? 'Cache Enabled' : 'Cache Disabled'; ?>
+            
+            <!-- Redis Status -->
+            <div class="macp-status-indicator <?php echo $redis_info['available'] ? 'active' : 'inactive'; ?>">
+                Redis: <?php echo $redis_info['available'] ? 'Connected' : 'Not Connected'; ?>
             </div>
+            
+            <!-- HTML Cache Status -->
+            <div class="macp-status-indicator <?php echo $settings['enable_html_cache'] ? 'active' : 'inactive'; ?>">
+                HTML Cache: <?php echo $settings['enable_html_cache'] ? 'Enabled' : 'Disabled'; ?>
+            </div>
+            
+            <?php if ($redis_info['available']): ?>
+            <div class="macp-status-details">
+                <p>Redis Version: <?php echo esc_html($redis_info['version']); ?></p>
+                <p>Memory Usage: <?php echo esc_html($redis_info['memory_usage']); ?></p>
+            </div>
+            <?php endif; ?>
             
             <!-- Cache Metrics Summary -->
             <?php if ($settings['enable_html_cache']): ?>

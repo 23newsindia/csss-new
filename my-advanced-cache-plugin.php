@@ -77,6 +77,11 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug-utility.php';
 require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css.php';
 require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css-generation.php';
 
+require_once MACP_PLUGIN_DIR . 'includes/redis/class-macp-redis-primer.php';
+
+
+
+
 // Initialize the plugin
 function MACP() {
     return MACP_Plugin::get_instance();

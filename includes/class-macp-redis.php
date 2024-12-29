@@ -11,45 +11,6 @@ class MACP_Redis {
         $this->metrics_recorder = new MACP_Metrics_Recorder();
     }
 
-    public function is_available() {
-        return $this->connection->is_connected();
-    }
-
-    public function get_status() {
-        $status = new MACP_Redis_Status();
-        return $status->get_status();
-    }
-
-    public function prime_cache() {
-        if (!$this->is_available()) {
-            return;
-        }
-
-        try {
-            $cache_dir = WP_CONTENT_DIR . '/cache/macp/';
-            if (!is_dir($cache_dir)) {
-                return;
-            }
-
-            $files = glob($cache_dir . '*.html');
-            if (!is_array($files)) {
-                return;
-            }
-
-            foreach ($files as $file) {
-                $key = basename($file, '.html');
-                if (!$this->connection->get_redis()->exists("macp:$key")) {
-                    $content = file_get_contents($file);
-                    if ($content !== false) {
-                        $this->set($key, $content);
-                    }
-                }
-            }
-        } catch (Exception $e) {
-            error_log('Redis cache priming failed: ' . $e->getMessage());
-        }
-    }
-
     public function get($key) {
         if (!$this->is_available()) {
             $this->metrics_recorder->record_miss('redis');
@@ -77,11 +38,20 @@ class MACP_Redis {
 
         try {
             $compressed = $this->compress($value);
-            return $this->connection->get_redis()->setex("macp:$key", $ttl, $compressed);
+            $success = $this->connection->get_redis()->setex("macp:$key", $ttl, $compressed);
+            if ($success) {
+                $this->metrics_recorder->record_hit('redis');
+            }
+            return $success;
         } catch (Exception $e) {
             error_log('Redis set error: ' . $e->getMessage());
+            $this->metrics_recorder->record_miss('redis');
             return false;
         }
+    }
+
+    public function is_available() {
+        return $this->connection->is_connected();
     }
 
     private function compress($data) {
@@ -125,9 +95,22 @@ class MACP_Redis {
                 $compressed = $this->compress($item['value']);
                 $pipeline->setex("macp:{$item['key']}", $item['ttl'], $compressed);
             }
-            $pipeline->exec();
+            $result = $pipeline->exec();
+            
+            // Record metrics for batch operations
+            foreach ($result as $success) {
+                if ($success) {
+                    $this->metrics_recorder->record_hit('redis');
+                } else {
+                    $this->metrics_recorder->record_miss('redis');
+                }
+            }
         } catch (Exception $e) {
             error_log('Redis pipeline error: ' . $e->getMessage());
+            // Record misses for failed batch
+            foreach ($this->batch_queue as $item) {
+                $this->metrics_recorder->record_miss('redis');
+            }
         }
         $this->batch_queue = [];
     }

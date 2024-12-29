@@ -187,3 +187,34 @@
 .macp-metrics-summary .button {
     margin-top: 10px;
 }
+
+/* Add to your existing CSS */
+.macp-status-details {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.macp-status-details p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.macp-status-indicator {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    margin: 5px;
+    font-weight: 500;
+}
+
+.macp-status-indicator.active {
+    background: #00a32a;
+    color: white;
+}
+
+.macp-status-indicator.inactive {
+    background: #cc1818;
+    color: white;
+}
