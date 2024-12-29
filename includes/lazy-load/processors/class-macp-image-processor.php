@@ -1,6 +1,6 @@
 <?php
 class MACP_Image_Processor {
-    private $excluded_classes = ['no-lazy', 'skip-lazy'];
+    private $excluded_classes = ['no-lazy', 'skip-lazy', 'king-lazy'];
 
     public function process($html) {
         if (empty($html)) {
@@ -22,26 +22,11 @@ class MACP_Image_Processor {
             return $img;
         }
 
-        // Get current classes
-        $classes = $this->get_classes($img);
-        
         // Add our lazy load class
-        $classes[] = 'macp-lazy';
+        $img = $this->add_lazy_load_class($img);
 
         // Replace src with data-src
-        $img = preg_replace(
-            '/\ssrc=(["\'])(.*?)\1/i',
-            ' src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'%3E%3C/svg%3E" data-src=$1$2$1',
-            $img
-        );
-
-        // Handle srcset
-        if (strpos($img, 'srcset') !== false) {
-            $img = preg_replace('/srcset=(["\'])(.*?)\1/i', 'data-srcset=$1$2$1', $img);
-        }
-
-        // Update class attribute
-        $img = $this->update_class_attribute($img, $classes);
+        $img = $this->replace_src_attributes($img);
 
         return $img;
     }
@@ -61,6 +46,28 @@ class MACP_Image_Processor {
         }
 
         return false;
+    }
+
+    private function add_lazy_load_class($img) {
+        $classes = $this->get_classes($img);
+        $classes[] = 'macp-lazy';
+        return $this->update_class_attribute($img, $classes);
+    }
+
+    private function replace_src_attributes($img) {
+        // Replace src with data-src
+        $img = preg_replace(
+            '/\ssrc=(["\'])(.*?)\1/i',
+            ' src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'%3E%3C/svg%3E" data-src=$1$2$1',
+            $img
+        );
+
+        // Handle srcset
+        if (strpos($img, 'srcset') !== false) {
+            $img = preg_replace('/srcset=(["\'])(.*?)\1/i', 'data-srcset=$1$2$1', $img);
+        }
+
+        return $img;
     }
 
     private function get_classes($img) {

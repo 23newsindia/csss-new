@@ -58,11 +58,6 @@ class MACP_Picture_Processor {
             $img = str_replace('<img', '<img class="macp-lazy"', $img);
         }
 
-        // Add loading attribute
-        if (strpos($img, 'loading=') === false) {
-            $img = str_replace('<img', '<img loading="lazy"', $img);
-        }
-
         return $img;
     }
 }

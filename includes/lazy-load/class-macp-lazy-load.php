@@ -1,11 +1,11 @@
 <?php
 class MACP_Lazy_Load {
     private $content_processor;
-    private $script_loader;
+    private $plugin_url;
 
     public function __construct() {
         $this->content_processor = new MACP_Lazy_Load_Processor();
-        $this->script_loader = new MACP_Script_Loader();
+        $this->plugin_url = plugins_url('', dirname(dirname(__FILE__)));
         
         if ($this->is_lazy_load_enabled()) {
             $this->init_hooks();
@@ -23,8 +23,49 @@ class MACP_Lazy_Load {
         add_filter('widget_text', [$this->content_processor, 'process_content'], 99);
         add_filter('render_block', [$this->content_processor, 'process_content'], 99);
         
+        // Add filter for images added via wp_get_attachment_image
+        add_filter('wp_get_attachment_image', [$this->content_processor, 'process_content'], 99);
+        
         // Handle attachment images
         add_filter('wp_get_attachment_image_attributes', [$this, 'modify_attachment_image_attributes'], 99, 2);
+
+        // Enqueue required scripts
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
+    }
+
+    public function enqueue_scripts() {
+        // Register and enqueue main stylesheet
+        wp_register_style('macp-lazy-load', false);
+        wp_enqueue_style('macp-lazy-load');
+
+        // Add inline styles
+        wp_add_inline_style('macp-lazy-load', "
+            .macp-lazy {
+                opacity: 0;
+                transition: opacity 0.3s ease-in;
+            }
+            .macp-lazy.macp-lazy-loaded {
+                opacity: 1;
+            }
+        ");
+
+        // Enqueue vanilla-lazyload
+        wp_enqueue_script(
+            'vanilla-lazyload',
+            $this->plugin_url . '/assets/js/vanilla-lazyload.min.js',
+            [],
+            '17.8.3',
+            true
+        );
+
+        // Enqueue our lazy load implementation
+        wp_enqueue_script(
+            'macp-lazy-load',
+            $this->plugin_url . '/assets/js/lazy-load.js',
+            ['vanilla-lazyload'],
+            '1.0.0',
+            true
+        );
     }
 
     public function modify_attachment_image_attributes($attributes, $attachment) {

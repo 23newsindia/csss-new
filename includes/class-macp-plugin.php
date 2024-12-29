@@ -19,6 +19,7 @@ class MACP_Plugin {
     private $metrics_collector;
     private $metrics_calculator;
     private $metrics_display;
+    private $lazy_load;
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -38,6 +39,9 @@ class MACP_Plugin {
 
     // Initialize settings manager first
     $this->settings_manager = new MACP_Settings_Manager();
+      
+    // Initialize lazy load
+    $this->lazy_load = new MACP_Lazy_Load();
   
     $this->redis = new MACP_Redis();
     

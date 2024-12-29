@@ -4,6 +4,9 @@ class MACP_Lazy_Load_Processor {
     private $image_processor;
 
     public function __construct() {
+        require_once dirname(__FILE__) . '/processors/class-macp-picture-processor.php';
+        require_once dirname(__FILE__) . '/processors/class-macp-image-processor.php';
+        
         $this->picture_processor = new MACP_Picture_Processor();
         $this->image_processor = new MACP_Image_Processor();
     }
@@ -13,17 +16,11 @@ class MACP_Lazy_Load_Processor {
             return $content;
         }
 
-        // Debug log
-        error_log('MACP: Processing content for lazy loading');
-
         // Process picture elements first
         $content = $this->picture_processor->process($content);
         
         // Process remaining images
         $content = $this->image_processor->process($content);
-
-        // Debug log processed content
-        error_log('MACP: Lazy loading processing complete');
 
         return $content;
     }
