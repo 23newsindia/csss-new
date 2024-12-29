@@ -26,10 +26,16 @@ class MACP_HTML_Cache {
     }
 
     public function should_cache_page() {
+        // Never cache admin pages or logged-in users
+        if (is_admin() || is_user_logged_in()) {
+            return false;
+        }
+
         if (!MACP_Cache_Helper::is_cacheable_request()) {
             return false;
         }
 
+        // Check excluded URLs
         $current_url = $_SERVER['REQUEST_URI'];
         foreach ($this->excluded_urls as $excluded_url) {
             if (strpos($current_url, $excluded_url) !== false) {
@@ -117,16 +123,10 @@ class MACP_HTML_Cache {
     }
 
     private function ensure_cache_directory() {
-        if (!MACP_Filesystem::ensure_directory($this->cache_dir)) {
-            MACP_Debug::log("Failed to create or access cache directory: " . $this->cache_dir);
-            return false;
+        if (!file_exists($this->cache_dir)) {
+            wp_mkdir_p($this->cache_dir);
+            file_put_contents($this->cache_dir . 'index.php', '<?php // Silence is golden');
         }
-        
-        if (!file_exists($this->cache_dir . 'index.php')) {
-            MACP_Filesystem::write_file($this->cache_dir . 'index.php', '<?php // Silence is golden');
-        }
-        
-        return true;
     }
 
     public function clear_cache($post_id = null) {
@@ -137,7 +137,10 @@ class MACP_HTML_Cache {
             
             // Clear all Redis HTML cache
             if ($this->redis) {
-                $this->redis->delete($this->redis->keys('html_*'));
+                $keys = $this->redis->keys('html_*');
+                if (!empty($keys)) {
+                    $this->redis->delete_pattern('html_*');
+                }
             }
         }
     }

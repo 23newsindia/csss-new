@@ -31,29 +31,58 @@ class MACP_Redis {
         return false;
     }
 
-    public function set($key, $value, $ttl = 3600) {
+    public function keys($pattern) {
         if (!$this->is_available()) {
-            return false;
+            $this->metrics_recorder->record_miss('redis');
+            return $this->connection->get_redis()->keys("macp:$pattern");
         }
 
         try {
-            $compressed = $this->compress($value);
-            return $this->connection->get_redis()->setex("macp:$key", $ttl, $compressed);
+            $keys = $this->connection->get_redis()->keys("macp:$pattern");
+            $this->metrics_recorder->record_hit('redis');
+            return $keys;
         } catch (Exception $e) {
-            error_log('Redis set error: ' . $e->getMessage());
-            return false;
+            error_log('Redis keys error: ' . $e->getMessage());
+            $this->metrics_recorder->record_miss('redis');
+            return [];
         }
     }
 
-    public function delete($key) {
-        if (!$this->is_available()) {
+    public function queue_set($key, $value, $ttl = 3600) {
+        $this->batch_queue[] = [
+            'key' => $key,
+            'value' => $this->compress($value),
+            'ttl' => $ttl
+        ];
+
+        if (count($this->batch_queue) >= $this->batch_size) {
+            return $this->flush_queue();
+        }
+
+        return true;
+    }
+
+    public function flush_queue() {
+        if (!$this->is_available() || empty($this->batch_queue)) {
             return false;
         }
 
         try {
-            return $this->connection->get_redis()->del("macp:$key");
+            $pipeline = $this->connection->get_redis()->multi(Redis::PIPELINE);
+            
+            foreach ($this->batch_queue as $item) {
+                $pipeline->setex(
+                    "macp:{$item['key']}", 
+                    $item['ttl'], 
+                    $item['value']
+                );
+            }
+
+            $pipeline->exec();
+            $this->batch_queue = [];
+            return true;
         } catch (Exception $e) {
-            error_log('Redis delete error: ' . $e->getMessage());
+            error_log('Redis pipeline error: ' . $e->getMessage());
             return false;
         }
     }
@@ -64,7 +93,7 @@ class MACP_Redis {
         }
 
         try {
-            $keys = $this->connection->get_redis()->keys("macp:$pattern");
+            $keys = $this->keys($pattern);
             if (!empty($keys)) {
                 return $this->connection->get_redis()->del($keys);
             }
@@ -73,10 +102,6 @@ class MACP_Redis {
             error_log('Redis delete pattern error: ' . $e->getMessage());
             return false;
         }
-    }
-
-    public function is_available() {
-        return $this->connection->is_connected();
     }
 
     private function compress($data) {
@@ -97,16 +122,7 @@ class MACP_Redis {
         return substr($data, 0, 2) === "\x78\x9c";
     }
 
-    public function flush() {
-        if (!$this->is_available()) {
-            return false;
-        }
-
-        try {
-            return $this->connection->get_redis()->flushDb();
-        } catch (Exception $e) {
-            error_log('Redis flush error: ' . $e->getMessage());
-            return false;
-        }
+    public function is_available() {
+        return $this->connection->is_connected();
     }
 }
