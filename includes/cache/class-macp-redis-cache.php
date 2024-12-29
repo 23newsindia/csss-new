@@ -2,10 +2,28 @@
 class MACP_Redis_Cache {
     private $redis;
     private $default_ttl = 3600;
+    private $metrics_recorder;
 
     public function __construct() {
         $this->redis = new Redis();
+        $this->metrics_recorder = new MACP_Metrics_Recorder();
         $this->connect();
+    }
+
+    public function get($key) {
+        if (!$this->redis) {
+            $this->metrics_recorder->record_miss('redis');
+            return false;
+        }
+
+        $value = $this->redis->get("macp:$key");
+        if ($value !== false) {
+            $this->metrics_recorder->record_hit('redis');
+            return $value;
+        }
+
+        $this->metrics_recorder->record_miss('redis');
+        return false;
     }
 
     private function connect() {

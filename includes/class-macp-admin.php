@@ -1,17 +1,16 @@
 <?php
-/**
- * Main admin class for handling WordPress admin functionality
- */
 class MACP_Admin {
     private $redis;
     private $settings_handler;
     private $assets_handler;
+    private $metrics_display;
 
     public function __construct($redis) {
         $this->redis = $redis;
         $this->settings_handler = new MACP_Admin_Settings();
         $this->assets_handler = new MACP_Admin_Assets();
-
+        $this->metrics_display = new MACP_Metrics_Display(new MACP_Metrics_Calculator($redis));
+        
         $this->init_hooks();
     }
 
@@ -21,6 +20,7 @@ class MACP_Admin {
     }
 
     public function add_admin_menu() {
+        // Add main menu
         add_menu_page(
             'Cache Settings',
             'Cache Settings',
@@ -31,6 +31,10 @@ class MACP_Admin {
             100
         );
 
+        // Add Cache Metrics submenu
+        $this->metrics_display->add_metrics_page();
+
+        // Add Debug Info submenu
         add_submenu_page(
             'macp-settings',
             'Debug Information',
@@ -42,20 +46,22 @@ class MACP_Admin {
     }
 
     public function render_settings_page() {
-        if (!current_user_can('manage_options')) return;
+        if (!current_user_can('manage_options')) {
+            return;
+        }
 
         $settings = $this->settings_handler->get_all_settings();
+        $metrics = (new MACP_Metrics_Calculator($this->redis))->get_all_metrics();
+        
         include MACP_PLUGIN_DIR . 'templates/admin-page.php';
-        include MACP_PLUGIN_DIR . 'templates/css-exclusions.php';
-        include MACP_PLUGIN_DIR . 'templates/js-optimization.php';
     }
 
     public function render_debug_page() {
-        if (!current_user_can('manage_options')) return;
+        if (!current_user_can('manage_options')) {
+            return;
+        }
         
-        require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug-utility.php';
         $status = MACP_Debug_Utility::check_plugin_status();
-        
         include MACP_PLUGIN_DIR . 'templates/debug-page.php';
     }
 }

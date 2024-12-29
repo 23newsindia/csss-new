@@ -13,6 +13,16 @@
             <div class="macp-status-indicator <?php echo $settings['enable_html_cache'] ? 'active' : 'inactive'; ?>">
                 <?php echo $settings['enable_html_cache'] ? 'Cache Enabled' : 'Cache Disabled'; ?>
             </div>
+            
+            <!-- Cache Metrics Summary -->
+            <?php if ($settings['enable_html_cache']): ?>
+            <div class="macp-metrics-summary">
+                <p>HTML Cache Hit Rate: <?php echo number_format($metrics['html_cache']['hit_rate'], 1); ?>%</p>
+                <p>Redis Cache Hit Rate: <?php echo number_format($metrics['redis_cache']['hit_rate'], 1); ?>%</p>
+                <a href="<?php echo admin_url('admin.php?page=macp-metrics'); ?>" class="button button-secondary">View Detailed Metrics</a>
+            </div>
+            <?php endif; ?>
+            
             <button class="button button-primary macp-clear-cache">Clear Cache</button>
         </div>
 
@@ -42,13 +52,6 @@
                     Enable GZIP Compression
                 </label>
             </div>
-
-            <!-- Varnish Settings -->
-            <?php 
-            // Initialize Varnish Settings
-            $varnish_settings = new MACP_Varnish_Settings();
-            $varnish_settings->render_settings(); 
-            ?>
 
             <!-- Optimization Options -->
             <div class="macp-card">
@@ -83,16 +86,21 @@
                     <span class="macp-toggle-slider"></span>
                     Process External CSS
                 </label>
-
-                <div class="notice notice-warning inline" style="margin-top: 15px;">
-                    <p><strong>Note:</strong> Removing unused CSS is an experimental feature. Please test thoroughly on a staging site first. Some dynamic content or JavaScript-added classes might be affected.</p>
-                </div>
             </div>
-          
-          <!-- Critical CSS Section -->
+
+            <!-- Include other sections -->
+            <?php include MACP_PLUGIN_DIR . 'templates/css-exclusions.php'; ?>
+            <?php include MACP_PLUGIN_DIR . 'templates/js-optimization.php'; ?>
             <?php include MACP_PLUGIN_DIR . 'templates/critical-css-section.php'; ?>
 
-          
+            <!-- Varnish Settings -->
+            <?php 
+            if (class_exists('MACP_Varnish_Settings')) {
+                $varnish_settings = new MACP_Varnish_Settings();
+                $varnish_settings->render_settings(); 
+            }
+            ?>
+
             <?php submit_button('Save Changes', 'primary', 'macp_save_settings'); ?>
         </form>
     </div>

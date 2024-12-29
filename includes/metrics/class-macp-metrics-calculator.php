@@ -1,29 +1,18 @@
 <?php
-/**
- * Calculates cache performance metrics
- */
 class MACP_Metrics_Calculator {
-    private $redis;
     private $metrics_key = 'macp_cache_metrics';
 
-    public function __construct(MACP_Redis $redis) {
-        $this->redis = $redis;
-    }
-
     public function get_hit_rate($cache_type) {
-        if (!$this->redis) return 0;
-
-        $hits = (int)$this->redis->hget($this->metrics_key, $cache_type . '_hits') ?: 0;
-        $misses = (int)$this->redis->hget($this->metrics_key, $cache_type . '_misses') ?: 0;
+        $metrics = get_option($this->metrics_key, []);
+        $hits = isset($metrics["{$cache_type}_hits"]) ? (int)$metrics["{$cache_type}_hits"] : 0;
+        $misses = isset($metrics["{$cache_type}_misses"]) ? (int)$metrics["{$cache_type}_misses"] : 0;
         
         $total = $hits + $misses;
-        return $total > 0 ? ($hits / $total) * 100 : 0;
+        return $total > 0 ? round(($hits / $total) * 100, 2) : 0;
     }
 
     public function get_all_metrics() {
-        if (!$this->redis) return [];
-
-        $metrics = $this->redis->hgetall($this->metrics_key) ?: [];
+        $metrics = get_option($this->metrics_key, []);
         
         return [
             'html_cache' => [
