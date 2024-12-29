@@ -22,7 +22,7 @@ class MACP_HTML_Cache {
         $this->ensure_cache_directory();
     }
 
-    public function get_excluded_urls() {
+    private function get_excluded_urls() {
         return [
             'wp-login.php',
             'wp-admin',

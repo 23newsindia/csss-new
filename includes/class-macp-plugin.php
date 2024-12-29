@@ -14,9 +14,6 @@ class MACP_Plugin {
     private $script_handler;
     private $settings_manager;
     private $critical_css;
-    private $metrics_collector;
-    private $metrics_calculator;
-    private $metrics_display;
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -37,16 +34,9 @@ class MACP_Plugin {
         // Initialize settings manager first
         $this->settings_manager = new MACP_Settings_Manager();
 
-        // Initialize Redis
+        // Initialize components
         $this->redis = new MACP_Redis();
-
-        // Initialize metrics components
-        $this->metrics_collector = new MACP_Metrics_Collector($this->redis);
-        $this->metrics_calculator = new MACP_Metrics_Calculator($this->redis);
-        $this->metrics_display = new MACP_Metrics_Display($this->metrics_calculator);
-
-        // Initialize other components
-        $this->html_cache = new MACP_HTML_Cache($this->redis, $this->metrics_collector);
+        $this->html_cache = new MACP_HTML_Cache();
         $this->js_optimizer = new MACP_JS_Optimizer();
         $this->admin = new MACP_Admin($this->redis);
         $this->admin_bar = new MACP_Admin_Bar();

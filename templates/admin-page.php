@@ -13,26 +13,6 @@
             <div class="macp-status-indicator <?php echo $settings['enable_html_cache'] ? 'active' : 'inactive'; ?>">
                 <?php echo $settings['enable_html_cache'] ? 'Cache Enabled' : 'Cache Disabled'; ?>
             </div>
-            
-            <!-- Cache Metrics Summary -->
-            <?php if ($settings['enable_html_cache']): ?>
-            <div class="macp-metrics-summary">
-                <p>HTML Cache Hit Rate: <?php echo number_format($metrics['html_cache']['hit_rate'], 1); ?>%</p>
-                <p>Redis Cache Hit Rate: <?php echo number_format($metrics['redis_cache']['hit_rate'], 1); ?>%</p>
-                <a href="<?php echo admin_url('admin.php?page=macp-metrics'); ?>" class="button button-secondary">View Detailed Metrics</a>
-            </div>
-            <?php endif; ?>
-            
-            <button class="button button-primary macp-clear-cache">Clear Cache</button>
-        </div>
-
-    <div class="macp-dashboard-wrap">
-        <!-- Status Card -->
-        <div class="macp-card macp-status-card">
-            <h2>Cache Status</h2>
-            <div class="macp-status-indicator <?php echo $settings['enable_html_cache'] ? 'active' : 'inactive'; ?>">
-                <?php echo $settings['enable_html_cache'] ? 'Cache Enabled' : 'Cache Disabled'; ?>
-            </div>
             <button class="button button-primary macp-clear-cache">Clear Cache</button>
         </div>
 
@@ -115,6 +95,5 @@
           
             <?php submit_button('Save Changes', 'primary', 'macp_save_settings'); ?>
         </form>
- <?php include MACP_PLUGIN_DIR . 'templates/settings-form.php'; ?>
     </div>
 </div>
