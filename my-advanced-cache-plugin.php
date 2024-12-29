@@ -46,6 +46,7 @@ require_once MACP_PLUGIN_DIR . 'includes/minify/class-macp-minify-html.php';
 require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-config.php';
 require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-extractor.php';
 require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-optimizer.php';
+require_once MACP_PLUGIN_DIR . 'includes/css/class-macp-css-minifier.php'; 
 
 // Load JavaScript optimization classes
 require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-script-attributes.php';

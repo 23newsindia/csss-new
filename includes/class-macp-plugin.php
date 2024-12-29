@@ -4,6 +4,7 @@
  */
 class MACP_Plugin {
     private static $instance = null;
+    private $css_minifier;
     private $redis;
     private $redis_primer;
     private $html_cache;
@@ -31,46 +32,52 @@ class MACP_Plugin {
     }
 
     private function init() {
-        // Register activation and deactivation hooks
-        register_activation_hook(MACP_PLUGIN_FILE, [$this, 'activate']);
-        register_deactivation_hook(MACP_PLUGIN_FILE, [$this, 'deactivate']);
+    // Register activation and deactivation hooks
+    register_activation_hook(MACP_PLUGIN_FILE, [$this, 'activate']);
+    register_deactivation_hook(MACP_PLUGIN_FILE, [$this, 'deactivate']);
 
-        // Initialize settings manager first
-        $this->settings_manager = new MACP_Settings_Manager();
-      
-         $this->redis = new MACP_Redis();
-        
-        // Initialize Redis primer
-        $this->redis_primer = new MACP_Redis_Primer($this->redis);
+    // Initialize settings manager first
+    $this->settings_manager = new MACP_Settings_Manager();
+  
+    $this->redis = new MACP_Redis();
+    
+    // Initialize Redis primer
+    $this->redis_primer = new MACP_Redis_Primer($this->redis);
 
-        // Initialize Redis
-        $this->redis = new MACP_Redis();
+    // Initialize Redis
+    $this->redis = new MACP_Redis();
 
-        // Initialize metrics components
-        $this->metrics_collector = new MACP_Metrics_Collector($this->redis);
-        $this->metrics_calculator = new MACP_Metrics_Calculator($this->redis);
-        $this->metrics_display = new MACP_Metrics_Display($this->metrics_calculator);
+    // Initialize metrics components
+    $this->metrics_collector = new MACP_Metrics_Collector($this->redis);
+    $this->metrics_calculator = new MACP_Metrics_Calculator($this->redis);
+    $this->metrics_display = new MACP_Metrics_Display($this->metrics_calculator);
 
-        // Initialize other components
-        $this->html_cache = new MACP_HTML_Cache($this->redis, $this->metrics_collector);
-        $this->js_optimizer = new MACP_JS_Optimizer();
-        $this->admin = new MACP_Admin($this->redis);
-        $this->admin_bar = new MACP_Admin_Bar();
-        $this->script_handler = new MACP_Script_Handler();
-        
-        // Initialize Critical CSS
-        $this->critical_css = new MACP_Critical_CSS($this->settings_manager);
-        
-        // Initialize Varnish if enabled
-        if (get_option('macp_enable_varnish', 0)) {
-            $this->varnish = new MACP_Varnish();
+    // Initialize other components
+    $this->html_cache = new MACP_HTML_Cache($this->redis, $this->metrics_collector);
+    $this->js_optimizer = new MACP_JS_Optimizer();
+    $this->admin = new MACP_Admin($this->redis);
+    $this->admin_bar = new MACP_Admin_Bar();
+    $this->script_handler = new MACP_Script_Handler();
+    
+    // Initialize Critical CSS
+    $this->critical_css = new MACP_Critical_CSS($this->settings_manager);
+    
+    // Initialize CSS minifier if enabled
+    if (get_option('macp_minify_css', 0)) {
+            $this->css_minifier = new MACP_CSS_Minifier();
+            add_filter('style_loader_tag', [$this->css_minifier, 'process_stylesheet'], 10, 4);
         }
-        $this->varnish_settings = new MACP_Varnish_Settings();
-
-        $this->init_hooks();
-        
-        MACP_Debug::log('Plugin initialized');
+    
+    // Initialize Varnish if enabled
+    if (get_option('macp_enable_varnish', 0)) {
+        $this->varnish = new MACP_Varnish();
     }
+    $this->varnish_settings = new MACP_Varnish_Settings();
+
+    $this->init_hooks();
+    
+    MACP_Debug::log('Plugin initialized');
+}
 
     private function init_hooks() {
         // Initialize caching based on settings
@@ -94,9 +101,19 @@ class MACP_Plugin {
         }
     }
 
-    public function activate() {
-        // Create cache directory
-        wp_mkdir_p(WP_CONTENT_DIR . '/cache/macp');
+     public function activate() {
+        // Create cache directories
+        $cache_dirs = [
+            WP_CONTENT_DIR . '/cache/macp',
+            WP_CONTENT_DIR . '/cache/min'
+          ];
+       
+        foreach ($cache_dirs as $dir) {
+            if (!file_exists($dir)) {
+                wp_mkdir_p($dir);
+                file_put_contents($dir . '/index.php', '<?php // Silence is golden');
+            }
+        }
         
         // Set default options
         add_option('macp_enable_html_cache', 1);
@@ -109,9 +126,14 @@ class MACP_Plugin {
         add_option('macp_varnish_servers', ['127.0.0.1']);
         add_option('macp_varnish_port', 6081);
         add_option('macp_enable_critical_css', 0);
+        add_option('macp_minify_css', 0);
     }
 
-    public function deactivate() {
-        $this->html_cache->clear_cache();
+      public function deactivate() {
+        // Clean up minified files
+        $min_dir = WP_CONTENT_DIR . '/cache/min/';
+        if (file_exists($min_dir)) {
+            array_map('unlink', glob($min_dir . '*.css'));
+        }
     }
-}
+   }
