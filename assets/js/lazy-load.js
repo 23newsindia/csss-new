@@ -1,33 +1,33 @@
 // Initialize vanilla-lazyload
-window.lazyLoadInstance = new LazyLoad({
-    elements_selector: ".macp-lazy",
-    use_native: true,
-    threshold: 300,
-    callback_enter: (element) => {
-        // Handle picture element sources
-        if (element.parentNode.tagName === 'PICTURE') {
-            element.parentNode.querySelectorAll('source').forEach(source => {
-                if (source.dataset.srcset) {
-                    source.srcset = source.dataset.srcset;
-                }
-            });
+window.addEventListener('load', function() {
+    window.lazyLoadInstance = new LazyLoad({
+        elements_selector: ".macp-lazy",
+        use_native: true,
+        threshold: 300,
+        callback_enter: function(element) {
+            // Handle picture element sources
+            if (element.parentNode.tagName === 'PICTURE') {
+                element.parentNode.querySelectorAll('source').forEach(function(source) {
+                    if (source.dataset.srcset) {
+                        source.srcset = source.dataset.srcset;
+                    }
+                });
+            }
+        },
+        callback_loaded: function(element) {
+            element.classList.add('macp-lazy-loaded');
+        },
+        callback_error: function(element) {
+            if (element.dataset.src) {
+                element.src = element.dataset.src;
+            }
         }
-    },
-    callback_loaded: (element) => {
-        element.classList.add('macp-lazy-loaded');
-        // Handle king-lazy class compatibility
-        if (element.classList.contains('king-lazy')) {
-            element.classList.add('loaded');
-        }
-    },
-    callback_error: (element) => {
-        if (element.dataset.src) {
-            element.src = element.dataset.src;
-        }
-    }
+    });
 });
 
 // Update lazy loading on dynamic content
-document.addEventListener('macp_content_updated', () => {
-    window.lazyLoadInstance.update();
+document.addEventListener('macp_content_updated', function() {
+    if (window.lazyLoadInstance) {
+        window.lazyLoadInstance.update();
+    }
 });

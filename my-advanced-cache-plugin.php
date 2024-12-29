@@ -88,7 +88,7 @@ require_once MACP_PLUGIN_DIR . 'includes/html/processors/class-macp-html-process
 require_once MACP_PLUGIN_DIR . 'includes/lazy-load/class-macp-lazy-load.php';
 require_once MACP_PLUGIN_DIR . 'includes/lazy-load/class-macp-lazy-load-processor.php';
 
-
+require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-script-loader.php';
 
 // Include the main plugin class last
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-plugin.php';

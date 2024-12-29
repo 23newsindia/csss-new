@@ -3,6 +3,10 @@ class MACP_Image_Processor {
     private $excluded_classes = ['no-lazy', 'skip-lazy'];
 
     public function process($html) {
+        if (empty($html)) {
+            return $html;
+        }
+
         return preg_replace_callback(
             '/<img[^>]*>/i',
             [$this, 'process_image'],
@@ -39,31 +43,21 @@ class MACP_Image_Processor {
         // Update class attribute
         $img = $this->update_class_attribute($img, $classes);
 
-        // Add loading attribute
-        if (strpos($img, 'loading=') === false) {
-            $img = str_replace('<img', '<img loading="lazy"', $img);
-        }
-
         return $img;
     }
 
     private function should_skip($img) {
-        // Check for excluded classes
-        foreach ($this->excluded_classes as $class) {
-            if (preg_match('/class=["\'][^"\']*\b' . $class . '\b[^"\']*["\']/', $img)) {
-                return true;
-            }
-        }
-
         // Skip if already processed
         if (strpos($img, 'data-src') !== false || 
             strpos($img, 'macp-lazy') !== false) {
             return true;
         }
 
-        // Skip if it's a king-lazy that's already loaded
-        if (strpos($img, 'king-lazy loaded') !== false) {
-            return true;
+        // Check for excluded classes
+        foreach ($this->excluded_classes as $class) {
+            if (preg_match('/class=["\'][^"\']*\b' . $class . '\b[^"\']*["\']/', $img)) {
+                return true;
+            }
         }
 
         return false;
