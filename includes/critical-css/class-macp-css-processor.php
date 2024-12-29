@@ -16,7 +16,7 @@ class MACP_CSS_Processor {
         
         // Extract only above-the-fold styles (customize based on your needs)
         $critical_selectors = [
-            'body', 'header', '#main-header', '.site-header',
+            'body', 'header', '#main-header', '.site-header', '#post-custom-css-css', '#home-custom-css-css',
             '.main-navigation', '.hero', '#hero',
             '.banner', '#banner', '.main-content', '.home-custom-css-css',
             '.entry-header', '.post-thumbnail'

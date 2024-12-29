@@ -73,14 +73,16 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-admin.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-admin-bar.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug-utility.php';
 
-// Load Critical CSS classes
-require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css.php';
+// Load Critical CSS classes - Make sure these are loaded in the correct order
 require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css-generation.php';
+require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-css-fetcher.php';
+require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-css-processor.php';
+require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css.php';
 
 require_once MACP_PLUGIN_DIR . 'includes/redis/class-macp-redis-primer.php';
 
-
-
+// Include the main plugin class last
+require_once MACP_PLUGIN_DIR . 'includes/class-macp-plugin.php';
 
 // Initialize the plugin
 function MACP() {
@@ -89,6 +91,3 @@ function MACP() {
 
 // Start the plugin
 add_action('plugins_loaded', 'MACP');
-
-// Include the main plugin class last
-require_once MACP_PLUGIN_DIR . 'includes/class-macp-plugin.php';
