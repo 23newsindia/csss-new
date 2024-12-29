@@ -166,4 +166,24 @@
     margin: 10px 0;
     padding: 10px;
     border-left: 4px solid #46b450;
+  
+  
+  
+}
+
+
+.macp-metrics-summary {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.macp-metrics-summary p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.macp-metrics-summary .button {
+    margin-top: 10px;
 }

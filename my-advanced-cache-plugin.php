@@ -21,6 +21,11 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-filesystem.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-url-helper.php';
 
+// Load metrics classes
+require_once MACP_PLUGIN_DIR . 'includes/metrics/class-macp-metrics-collector.php';
+require_once MACP_PLUGIN_DIR . 'includes/metrics/class-macp-metrics-calculator.php';
+require_once MACP_PLUGIN_DIR . 'includes/metrics/class-macp-metrics-display.php';
+
 // Load core functionality classes
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-redis.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-cache-helper.php';
@@ -54,7 +59,7 @@ require_once MACP_PLUGIN_DIR . 'includes/js/class-macp-delay-handler.php';
 require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-vcl-generator.php';
 require_once MACP_PLUGIN_DIR . 'includes/varnish/class-macp-varnish.php';
 
-// Load admin classes - Note the order is important!
+// Load admin classes
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-settings-manager.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-admin-settings.php';
 require_once MACP_PLUGIN_DIR . 'includes/admin/class-macp-admin-assets.php';
@@ -63,7 +68,7 @@ require_once MACP_PLUGIN_DIR . 'includes/class-macp-admin.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-admin-bar.php';
 require_once MACP_PLUGIN_DIR . 'includes/class-macp-debug-utility.php';
 
-// criticalcss
+// Load Critical CSS classes
 require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css.php';
 require_once MACP_PLUGIN_DIR . 'includes/critical-css/class-macp-critical-css-generation.php';
 
