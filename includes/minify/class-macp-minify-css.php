@@ -1,6 +1,17 @@
 <?php
+require_once MACP_PLUGIN_DIR . 'includes/css/utils/class-macp-css-patterns.php';
+require_once MACP_PLUGIN_DIR . 'includes/css/utils/class-macp-media-query-processor.php';
+require_once MACP_PLUGIN_DIR . 'includes/css/utils/class-macp-font-awesome-processor.php';
+
 class MACP_Minify_CSS {
     private static $instance = null;
+    private $media_processor;
+    private $fa_processor;
+    
+    public function __construct() {
+        $this->media_processor = new MACP_Media_Query_Processor();
+        $this->fa_processor = new MACP_Font_Awesome_Processor();
+    }
     
     public static function get_instance() {
         if (null === self::$instance) {
@@ -12,34 +23,39 @@ class MACP_Minify_CSS {
     public function minify($css) {
         if (empty($css)) return $css;
 
+        // Process Font Awesome specific rules
+        $css = $this->fa_processor->process($css);
+
+        // Process media queries
+        $css = $this->media_processor->process($css);
+
+        // Apply all minification patterns
+        $patterns = MACP_CSS_Patterns::get_patterns();
+
         // Remove comments
-        $css = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $css);
+        foreach ($patterns['comments'] as $pattern) {
+            $css = preg_replace($pattern, '', $css);
+        }
 
-        // Remove whitespace
-        $css = preg_replace('/\s+/', ' ', $css);
-        
-        // Remove spaces before and after operators
-        $css = preg_replace('/\s*([\{\};:,])\s*/', '$1', $css);
-        
-        // Remove unnecessary semicolons
-        $css = preg_replace('/;}/', '}', $css);
-        
-        // Remove leading zeros
-        $css = preg_replace('/(?<![\d.])\b0+(\.\d+)/', '$1', $css);
-        
-        // Convert RGB colors to hex
-        $css = preg_replace_callback('/rgb\s*\(\s*([0-9,\s]+)\s*\)/', function($matches) {
-            $rgb = explode(',', $matches[1]);
-            return sprintf('#%02x%02x%02x', 
-                trim($rgb[0]), 
-                trim($rgb[1]), 
-                trim($rgb[2])
-            );
-        }, $css);
+        // Process whitespace
+        foreach ($patterns['whitespace'] as $pattern => $replacement) {
+            $css = preg_replace($pattern, $replacement, $css);
+        }
 
-        // Shorten hex colors
-        $css = preg_replace('/\#([a-f0-9])\1([a-f0-9])\2([a-f0-9])\3/i', '#$1$2$3', $css);
+        // Process numbers
+        foreach ($patterns['numbers'] as $pattern => $replacement) {
+            $css = preg_replace($pattern, $replacement, $css);
+        }
 
+        // Process colors
+        foreach ($patterns['colors'] as $pattern => $replacement) {
+            $css = preg_replace($pattern, $replacement, $css);
+        }
+
+        // Final cleanup
+        $css = preg_replace('/[^}]+{\s*}/', '', $css); // Remove empty rules
+        $css = preg_replace('/;}/', '}', $css); // Remove last semicolon
+        
         return trim($css);
     }
 }
