@@ -1,22 +1,32 @@
 // Initialize vanilla-lazyload
 window.lazyLoadInstance = new LazyLoad({
-    elements_selector: ".lazy",
-    use_native: true, // Use native lazy loading if available
+    elements_selector: ".macp-lazy",
+    use_native: true,
     threshold: 300,
-    callback_error: (element) => {
-        // Remove lazy class on error
-        element.classList.remove('lazy');
-        // Try loading the original source
-        if (element.getAttribute('data-src')) {
-            element.src = element.getAttribute('data-src');
+    callback_enter: (element) => {
+        // Handle picture element sources
+        if (element.parentNode.tagName === 'PICTURE') {
+            element.parentNode.querySelectorAll('source').forEach(source => {
+                if (source.dataset.srcset) {
+                    source.srcset = source.dataset.srcset;
+                }
+            });
         }
     },
     callback_loaded: (element) => {
-        element.classList.add('lazy-loaded');
+        element.classList.add('macp-lazy-loaded');
+        if (element.classList.contains('king-lazy')) {
+            element.classList.add('loaded');
+        }
+    },
+    callback_error: (element) => {
+        if (element.dataset.src) {
+            element.src = element.dataset.src;
+        }
     }
 });
 
 // Update lazy loading on dynamic content
-document.addEventListener('macp_content_updated', function() {
+document.addEventListener('macp_content_updated', () => {
     window.lazyLoadInstance.update();
 });
