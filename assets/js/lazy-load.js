@@ -15,6 +15,7 @@ window.lazyLoadInstance = new LazyLoad({
     },
     callback_loaded: (element) => {
         element.classList.add('macp-lazy-loaded');
+        // Handle king-lazy class compatibility
         if (element.classList.contains('king-lazy')) {
             element.classList.add('loaded');
         }
